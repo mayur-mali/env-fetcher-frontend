@@ -4,9 +4,26 @@ import "./index.css";
 import App from "./App.tsx";
 import { RouterProvider } from "react-router-dom";
 import router from "./routes";
+import { AuthProvider } from "./contexts/AuthContext.jsx";
+import { Bounce, ToastContainer } from "react-toastify";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
-    <RouterProvider router={router} />
+    <AuthProvider>
+      <RouterProvider router={router} />
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick={false}
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+        transition={Bounce}
+      />
+    </AuthProvider>
   </StrictMode>
 );

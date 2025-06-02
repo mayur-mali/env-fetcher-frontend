@@ -1,35 +1,45 @@
 import { createBrowserRouter } from "react-router-dom";
 import App from "../App";
 import NotFound from "../pages/NotFound";
-import ProtectedRoute from "./ProtectedRoute";
+
 import Dashboard from "../pages/Dashboard";
 import Login from "../pages/Login";
 import AuthRedirect from "./AuthRedirect";
 import Signup from "../pages/Signup";
+import ProtectedRoute from "./ProtectedRoute";
+import PublicRoute from "./PublicRoute";
+import Project from "../pages/Project";
+import Developers from "../pages/Developers";
+import MainLayout from "../layouts/MainLayout";
 
 const router = createBrowserRouter([
   {
     path: "/",
-    element: <ProtectedRoute />,
+    element: (
+      <ProtectedRoute>
+        <MainLayout />
+      </ProtectedRoute>
+    ),
     children: [
       { index: true, element: <Dashboard /> },
-      { path: "/about", element: <>About</> },
+      { path: "/project", element: <Project /> },
+      { path: "/developer", element: <Developers /> },
     ],
   },
   {
     path: "/login",
     element: (
-      <AuthRedirect>
+      <PublicRoute>
         <Login />
-      </AuthRedirect>
+      </PublicRoute>
     ),
   },
   {
     path: "/signup",
     element: (
-      <AuthRedirect>
+      <PublicRoute>
         <Signup />
-      </AuthRedirect>
+      </PublicRoute>
     ),
   },
   {
