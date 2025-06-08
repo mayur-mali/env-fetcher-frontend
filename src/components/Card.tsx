@@ -3,15 +3,17 @@ import React from "react";
 export default function Card({
   label,
   value,
+  icon,
 }: {
   label: string;
   value: string;
+  icon?: React.ReactNode;
 }) {
-  // This component is a placeholder for a card that displays a label and a value.
   return (
-    <div className="p-4 rounded-lg shadow max-w-sm bg-white/50">
-      <h3 className="text-lg font-semibold">{label}</h3>
-      <p className="text-gray-700">{value}</p>
+    <div className="p-4 flex justify-center items-center flex-col rounded-lg shadow gap-y-2 w-full bg-white/50">
+      {icon && icon}
+      <h3 className="text-2xl font-semibold">{value}</h3>
+      <p className="text-gray-700 text-lg">{label}</p>
     </div>
   );
 }
