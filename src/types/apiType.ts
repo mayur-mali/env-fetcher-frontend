@@ -1,12 +1,14 @@
-// src/types/api.ts
 export interface AuthResponse {
   message: string;
-  token?: string;
+  token?: string | null | undefined;
+  admin?: User;
 }
 
 export interface User {
-  _id: string;
+  id: string;
   email: string;
+  firstName: string;
+  lastName: string;
 }
 
 export interface UserResponse {

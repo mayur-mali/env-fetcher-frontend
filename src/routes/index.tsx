@@ -11,6 +11,7 @@ import PublicRoute from "./PublicRoute";
 import Project from "../pages/Project";
 import Developers from "../pages/Developers";
 import MainLayout from "../layouts/MainLayout";
+import AuthLayout from "../layouts/AuthLayout";
 
 const router = createBrowserRouter([
   {
@@ -30,17 +31,29 @@ const router = createBrowserRouter([
     path: "/login",
     element: (
       <PublicRoute>
-        <Login />
+        <AuthLayout />
       </PublicRoute>
     ),
+    children: [
+      {
+        index: true,
+        element: <Login />,
+      },
+    ],
   },
   {
     path: "/signup",
     element: (
       <PublicRoute>
-        <Signup />
+        <AuthLayout />
       </PublicRoute>
     ),
+    children: [
+      {
+        index: true,
+        element: <Signup />,
+      },
+    ],
   },
   {
     path: "*",

@@ -10,14 +10,23 @@ import {
   GenerateProjectToken,
 } from "../types/apiType";
 
-export const registerApi = async (
-  email: string,
-  password: string
-): Promise<string | null> => {
+export const registerApi = async ({
+  firstName,
+  lastName,
+  email,
+  password,
+}: {
+  firstName: string;
+  lastName: string;
+  email: string;
+  password: string;
+}): Promise<string | null> => {
   try {
-    const res = await axios.post<AuthResponse>("/api/admin/signup", {
+    const res = await axios.post<AuthResponse>("/api/admin/register", {
       email,
       password,
+      firstName,
+      lastName,
     });
     return res.data.message || "Registration successful";
   } catch {
@@ -28,17 +37,18 @@ export const registerApi = async (
 export const loginApi = async (
   email: string,
   password: string
-): Promise<string> => {
+): Promise<AuthResponse> => {
   const res = await axios.post<AuthResponse>("/api/admin/login", {
     email,
     password,
   });
-  if (!res.data.token) throw new Error("No token returned");
-  return res.data.token;
+
+  if (res.statusText !== "OK") throw new Error("No token returned");
+  return res.data;
 };
 
 export const getUserApi = async (): Promise<User> => {
-  const res = await axios.get<UserResponse>("/api/admin/get-user");
+  const res = await axios.get<UserResponse>("/api/admin/me");
   return res.data.admin;
 };
 

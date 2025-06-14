@@ -14,22 +14,22 @@ export default function Dashboard() {
   const { user, logout } = useAuth();
   const [activities, setActivities] = React.useState<any>([]);
   const [loading, setLoading] = React.useState(false);
-  useEffect(() => {
-    const fetchActivity = async () => {
-      try {
-        setLoading(true);
-        const activities = await getAllActivitiesApi();
-        const dashboardState = await getDashboardStatsApi();
-        console.log(dashboardState);
+  // useEffect(() => {
+  //   const fetchActivity = async () => {
+  //     try {
+  //       setLoading(true);
+  //       const activities = await getAllActivitiesApi();
+  //       const dashboardState = await getDashboardStatsApi();
+  //       console.log(dashboardState);
 
-        setActivities(activities);
-      } catch (err) {
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchActivity();
-  }, []);
+  //       setActivities(activities);
+  //     } catch (err) {
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   };
+  //   fetchActivity();
+  // }, []);
   return (
     <div className="">
       <p className="text-2xl ml-4 text-gray-800">Quick State</p>
@@ -37,7 +37,7 @@ export default function Dashboard() {
         <Card
           label="Total Projects"
           icon={<BsGraphUpArrow className="text-3xl" />}
-          value={user?.name || "Guest"}
+          value={user?.firstName || "Guest"}
         />
         <Card
           label="Developers"
