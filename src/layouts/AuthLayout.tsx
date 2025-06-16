@@ -11,7 +11,7 @@ export default function AuthLayout() {
           className="w-[150px] h-20 object-contain"
         />
       </div>
-      <div className="h-full w-full">
+      <div className="h-full w-full bg-black/10">
         <Outlet />
       </div>
     </div>

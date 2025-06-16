@@ -33,9 +33,9 @@ export default function Login() {
   };
 
   return (
-    <div className=" max-w-xl px-4 mx-auto w-full justify-center items-center h-full flex flex-col">
-      <div className="pl-4 w-full">
-        <h1 className="text-5xl font-bold">Welcome Back </h1>
+    <div className=" px-4 mx-auto w-full justify-center items-center h-full flex flex-col">
+      <div className="max-w-xl w-full mx-auto px-8 py-10 bg-white rounded-lg shadow-md">
+        <h1 className="text-5xl font-bold text-center">Welcome Back </h1>
         <form onSubmit={handleLogin} className="mt-10">
           <div className="mt-4">
             <label className="text-lg font-semibold">Email</label>
@@ -61,7 +61,7 @@ export default function Login() {
           <button
             type="submit"
             disabled={loading}
-            className="mt-6 w-full h-10 disabled:bg-blue-100 disabled:text-black bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition duration-200"
+            className="mt-6 w-full h-10 disabled:bg-rose-100 disabled:text-black bg-rose-600 text-white py-2 rounded-lg hover:bg-rose-700 transition duration-200"
           >
             {loading ? (
               <AiOutlineLoading3Quarters className=" animate-spin mx-auto" />

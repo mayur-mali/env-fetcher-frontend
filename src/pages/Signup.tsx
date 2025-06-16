@@ -4,26 +4,29 @@ import { Navigate, NavLink, useNavigate } from "react-router-dom";
 
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
 import { toast } from "react-toastify";
-import { registerApi } from "../services/api";
+import { registerApi, verifyOtpApi } from "../services/api";
 import { MdOutlineMarkEmailRead } from "react-icons/md";
 import { IoMdArrowRoundBack } from "react-icons/io";
 interface OTPVerificationProps {
   email: string;
   onVerificationSuccess: (user: any) => void;
   onBackToLogin: () => void;
+  onRecentOtp: () => Promise<void>;
 }
 const OTPVerification: React.FC<OTPVerificationProps> = ({
   email,
   onVerificationSuccess,
   onBackToLogin,
+  onRecentOtp,
 }) => {
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [isLoading, setIsLoading] = useState(false);
   const [isResending, setIsResending] = useState(false);
   const [error, setError] = useState("");
-  const [timeLeft, setTimeLeft] = useState(50);
+  const [timeLeft, setTimeLeft] = useState(120);
   const [canResend, setCanResend] = useState(false);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const navigate = useNavigate();
   const handleOtpChange = (index: number, value: string) => {
     const numericValue = value.replace(/[^0-9]/g, "");
     if (numericValue.length > 1) return;
@@ -39,9 +42,9 @@ const OTPVerification: React.FC<OTPVerificationProps> = ({
     }
 
     // Auto-submit when all fields are filled
-    // if (newOtp.every((digit) => digit !== "") && newOtp.join("").length === 6) {
-    //   handleVerify(newOtp.join(""));
-    // }
+    if (newOtp.every((digit) => digit !== "") && newOtp.join("").length === 6) {
+      verifyOtp(newOtp.join(""), email);
+    }
   };
 
   const handleKeyDown = (index: number, e: React.KeyboardEvent) => {
@@ -68,9 +71,33 @@ const OTPVerification: React.FC<OTPVerificationProps> = ({
 
     return () => clearInterval(timer);
   }, []);
+
+  const verifyOtp = async (otp: string, email: string) => {
+    setIsLoading(true);
+    verifyOtpApi(email, otp)
+      .then((res: any) => {
+        if (res.message === "Email verified. You can now log in.") {
+          setIsLoading(false);
+          setError("");
+          toast.success(res.message);
+          navigate("/login");
+        } else {
+          toast.error("Invalid OTP. Please try again.");
+        }
+      })
+      .catch((error) => {
+        console.error("Error verifying OTP:", error);
+        setError("Invalid OTP. Please try again.");
+      })
+      .finally(() => {
+        setIsLoading(false);
+        setOtp(["", "", "", "", "", ""]);
+      });
+  };
+
   return (
     <div className="w-full max-w-md mx-auto p-6 bg-white rounded-lg shadow-md">
-      <IoMdArrowRoundBack className="text-gray-500 hover:text-gray-700 cursor-pointer text-2xl" />
+      {/* <IoMdArrowRoundBack className="text-gray-500 hover:text-gray-700 cursor-pointer text-2xl" /> */}
       <h2 className="text-lg font-bold text-center">Verify Your Email</h2>
       <p className="text-center">We've sent a 6-digit verification code to</p>
       <div className="h-10 flex items-center gap-x-2 rounded-md my-6 justify-center bg-green-100 border border-green-200">
@@ -103,31 +130,48 @@ const OTPVerification: React.FC<OTPVerificationProps> = ({
             <span className="text-black">{formatTime(timeLeft)}</span>
           </p>
         ) : (
-          <p className="timer expired">Code has expired</p>
+          <p className="timer expired float-right mr-9">
+            Code has expired ?{" "}
+            <span
+              onClick={() => {
+                if (canResend) {
+                  setIsResending(true);
+                  onRecentOtp()
+                    .then(() => {
+                      setCanResend(false);
+                      setTimeLeft(120);
+                      setIsResending(false);
+                    })
+                    .catch((error) => {
+                      console.error("Error resending OTP:", error);
+                      toast.error("Failed to resend OTP. Please try again.");
+                      setIsResending(false);
+                    });
+                }
+              }}
+              className="hover:underline cursor-pointer hover:text-blue-500"
+            >
+              Resend OTP
+            </span>
+          </p>
         )}
       </div>
-      <div className="flex justify-center mt-4">
+      <div>
         <button
-          onClick={() => {
-            if (canResend) {
-              setIsResending(true);
-              // Simulate API call to resend OTP
-              setTimeout(() => {
-                setIsResending(false);
-                setCanResend(false);
-                setTimeLeft(40);
-                toast.success("OTP resent successfully");
-              }, 2000);
-            } else {
-              toast.error("Please wait before resending the OTP");
-            }
-          }}
-          disabled={!canResend || isResending}
-          className={`px-4 py-2 rounded-lg text-white ${
-            canResend ? "bg-blue-600 hover:bg-blue-700" : "bg-gray-400"
-          }`}
+          type="button"
+          className={
+            "px-4 h-10 py-2 disabled:cursor-not-allowed cursor-pointer mt-4 disabled:bg-blue-100 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-200 w-full"
+          }
+          onClick={() => verifyOtp(otp.join(""), email)}
+          disabled={isLoading || otp.some((digit) => digit === "")}
         >
-          {isResending ? "Resending..." : "Resend OTP"}
+          {isLoading ? (
+            <>
+              <AiOutlineLoading3Quarters className="animate-spin mx-auto " />
+            </>
+          ) : (
+            "Verify Code"
+          )}
         </button>
       </div>
     </div>
@@ -140,14 +184,28 @@ function Signup() {
   const [currentView, setCurrentView] = useState<AuthView>("signup");
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const formData = new FormData(e.target as HTMLFormElement);
-    const email = formData.get("email");
-    const password = formData.get("password");
-    const firstName = formData.get("firstName");
-    const lastName = formData.get("lastName");
-    const confirmPassword = formData.get("confirmPassword");
+  const [formData, setFormData] = useState<{
+    firstName: string;
+    lastName: string;
+    email: string;
+    password: string;
+    confirmPassword: string;
+  }>({
+    firstName: "",
+    lastName: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+  });
+  const handleSubmit = async (data: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    password: string;
+    confirmPassword: string;
+  }) => {
+    const { firstName, lastName, email, password, confirmPassword } = data;
+
     if (!email || !password) {
       toast.error("Email and password are required");
       return;
@@ -158,23 +216,25 @@ function Signup() {
     }
     setLoading(true);
     try {
-      // Simulate API call to register user
-      setTimeout(() => {
-        setLoading(false);
+      const res = await registerApi({
+        firstName: firstName?.toString() || "",
+        lastName: lastName?.toString() || "",
+        email: email.toString(),
+        password: password.toString(),
+      });
+
+      if (res === "Admin registered. Please verify OTP sent to your email.") {
         setCurrentView("otp");
         toast.success("Registration successful! Please verify your email.");
-      }, 2000);
-
-      // const res = await registerApi({
-      //   firstName: firstName?.toString() || "",
-      //   lastName: lastName?.toString() || "",
-      //   email: email.toString(),
-      //   password: password.toString(),
-      // });
-
-      // if (res === "Admin registered. Please verify OTP sent to your email.") {
-      //   setLoading(false);
-      // }
+      }
+      if (
+        res ===
+        "A new OTP has been sent to your email. Please verify to complete registration."
+      ) {
+        toast.success(
+          "A new OTP has been sent to your email. Please verify to complete registration."
+        );
+      }
     } catch (error) {
       console.error("error while creating user", error.error);
     } finally {
@@ -183,11 +243,17 @@ function Signup() {
   };
 
   return (
-    <div className=" max-w-lg px-4 mx-auto w-full justify-center items-center h-full flex flex-col">
+    <div className="px-4 mx-auto w-full justify-center items-center h-full flex flex-col">
       {currentView === "signup" && (
-        <div>
-          <h1 className="text-5xl font-bold">Get Start For Free</h1>
-          <form onSubmit={handleSubmit} className="mt-10">
+        <div className="max-w-xl w-full mx-auto px-8 py-10 bg-white rounded-lg shadow-md">
+          <h1 className="text-5xl font-bold text-center">Get Start For Free</h1>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleSubmit(formData);
+            }}
+            className="mt-10"
+          >
             <div className="flex w-full mt-10 gap-x-8 items-center">
               <div className="w-1/2">
                 <label className="text-lg font-semibold">First Name</label>
@@ -196,6 +262,12 @@ function Signup() {
                   name="firstName"
                   placeholder="John"
                   required
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      firstName: e.target.value,
+                    })
+                  }
                   className="w-full px-4 py-1.5 mt-1 border border-gray-300 rounded-lg focus:outline-none"
                 />
               </div>
@@ -206,6 +278,12 @@ function Signup() {
                   name="lastName"
                   placeholder="Smith"
                   required
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      lastName: e.target.value,
+                    })
+                  }
                   className="w-full px-4 py-1.5 mt-1 border border-gray-300 rounded-lg focus:outline-none"
                 />
               </div>
@@ -218,6 +296,12 @@ function Signup() {
                 name="email"
                 placeholder="Email"
                 required
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    email: e.target.value,
+                  })
+                }
                 className="w-full mt-1 px-4 py-1.5 border border-gray-300 rounded-lg focus:outline-none "
               />
             </div>
@@ -228,6 +312,12 @@ function Signup() {
                 name="password"
                 placeholder="Enter your password"
                 required
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    password: e.target.value,
+                  })
+                }
                 className="w-full mt-1 px-4 py-1.5 border border-gray-300 rounded-lg focus:outline-none "
               />
             </div>
@@ -238,13 +328,19 @@ function Signup() {
                 name="confirmPassword"
                 placeholder="Re-enter your password"
                 required
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    confirmPassword: e.target.value,
+                  })
+                }
                 className="w-full mt-1 px-4 py-1.5 border border-gray-300 rounded-lg focus:outline-none "
               />
             </div>
             <button
               type="submit"
               disabled={loading}
-              className="mt-6 w-full h-10 disabled:bg-blue-100 disabled:text-black bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition duration-200"
+              className="mt-6 w-full h-10 disabled:bg-rose-100 disabled:text-black bg-rose-600 text-white py-2 rounded-lg hover:bg-rose-700 transition duration-200"
             >
               {loading ? (
                 <AiOutlineLoading3Quarters className=" animate-spin mx-auto" />
@@ -266,9 +362,12 @@ function Signup() {
       )}
       {currentView === "otp" && (
         <OTPVerification
-          email="mayur@mail.com"
+          email={formData.email}
           onVerificationSuccess={() => {}}
           onBackToLogin={() => {}}
+          onRecentOtp={async () => {
+            handleSubmit(formData);
+          }}
         />
       )}
     </div>

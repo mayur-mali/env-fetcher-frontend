@@ -21,6 +21,7 @@ import { TbFileTypeTxt } from "react-icons/tb";
 import { MdOutlineDelete } from "react-icons/md";
 import { CgCopy } from "react-icons/cg";
 import { FcFolder } from "react-icons/fc";
+import TagInput from "../components/TagInput";
 
 const UploadEnvironmentFile = ({ projectId }: any) => {
   let [isOpen, setIsOpen] = useState(false);
@@ -325,8 +326,18 @@ export default function Project() {
   const [loading, setLoading] = React.useState<boolean>(true);
   const [createProjectLoading, setCreateProjectLoading] =
     useState<boolean>(false);
+  const [tags, setTags] = useState([]);
   const [isOpen, setIsOpen] = useState<boolean>(false);
-  const [projectName, setProjectName] = useState<string>("");
+  const [projectDetails, setProjectDetails] = useState<{
+    name: string;
+    description: string;
+    tags: never[];
+  }>({
+    name: "",
+    description: "",
+    tags: [],
+  });
+
   useEffect(() => {
     const fetchProjects = async () => {
       try {
@@ -340,20 +351,29 @@ export default function Project() {
     };
     fetchProjects();
   }, []);
-
+  console.log(projectDetails.name);
   const createNewProject = async (e) => {
     e.preventDefault();
-    if (!projectName) {
+
+    if (!projectDetails.name) {
       toast.error("Project name is required");
       return;
     }
     try {
       setCreateProjectLoading(true);
-      const res = await createProjectApi(projectName);
+      const res = await createProjectApi({
+        name: projectDetails.name,
+        description: projectDetails.description,
+        tags: projectDetails.tags,
+      });
       if (res) {
         toast.success("Project created successfully");
         setIsOpen(false);
-        setProjectName("");
+        setProjectDetails({
+          name: "",
+          description: "",
+          tags: [],
+        });
         const updatedProjects = await getAllProjectsApi();
         setProjects(
           Array.isArray(updatedProjects) ? updatedProjects : [updatedProjects]
@@ -377,10 +397,29 @@ export default function Project() {
               type="text"
               placeholder="Enter project name"
               required
-              value={projectName}
-              onChange={(e) => setProjectName(e.target.value)}
+              value={projectDetails.name}
+              onChange={(e) =>
+                setProjectDetails({ ...projectDetails, name: e.target.value })
+              }
               className="border border-gray-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
+            <label className="text-sm font-semibold">Description</label>
+            <input
+              type="text"
+              placeholder="Enter project description"
+              name="description"
+              required
+              value={projectDetails.description}
+              onChange={(e) =>
+                setProjectDetails({
+                  ...projectDetails,
+                  description: e.target.value,
+                })
+              }
+              className="border border-gray-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <label className="text-sm font-semibold">Tags</label>
+            <TagInput tags={projectDetails.tags} setTags={setProjectDetails} />
             <button
               type="submit"
               disabled={createProjectLoading}

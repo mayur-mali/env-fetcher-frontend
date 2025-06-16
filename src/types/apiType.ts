@@ -19,6 +19,9 @@ export interface ProjectResponse {
   _id: string;
   name: string;
   admin: User;
+  isDelete: boolean;
+  tags: string[];
+  discription?: string;
   envFiles?: any[];
   recentActivities?: any[];
   createdAt: string;
@@ -27,7 +30,10 @@ export interface ProjectResponse {
 
 export interface CreateProjectRequest {
   name: string;
-  adminId: string;
+  adminId?: string;
+  description?: string;
+  tags?: string[];
+  status?: string;
 }
 
 export interface UploadEnvFile {

@@ -53,15 +53,19 @@ export const getUserApi = async (): Promise<User> => {
 };
 
 export const getAllProjectsApi = async (): Promise<ProjectResponse> => {
-  const res = await axios.get<ProjectResponse>("/api/project/all");
+  const res = await axios.get<ProjectResponse>("/api/project");
   return res.data;
 };
 
-export const createProjectApi = async (
-  name: string
-): Promise<CreateProjectRequest> => {
-  const res = await axios.post<CreateProjectRequest>("/api/project/create", {
+export const createProjectApi = async ({
+  name,
+  description,
+  tags,
+}: CreateProjectRequest): Promise<CreateProjectRequest> => {
+  const res = await axios.post<CreateProjectRequest>("/api/project/", {
     name,
+    description,
+    tags,
   });
   return res.data;
 };
@@ -129,5 +133,18 @@ export const getAllActivitiesApi = async (): Promise<[]> => {
 export const getDashboardStatsApi = async (): Promise<{}> => {
   const res = await axios.get<{}>("/api/activity/dashboard/stats");
   if (!res.data) throw new Error("No dashboard stats found");
+  return res.data;
+};
+
+export const verifyOtpApi = async (
+  email: string,
+  otp: string
+): Promise<string> => {
+  const res = await axios.post<string>("/api/admin/verify-otp", {
+    email,
+    otp,
+  });
+
+  if (res.statusText !== "OK") throw new Error("OTP verification failed");
   return res.data;
 };
