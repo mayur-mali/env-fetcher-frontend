@@ -351,7 +351,7 @@ export default function Project() {
     };
     fetchProjects();
   }, []);
-  console.log(projectDetails.name);
+
   const createNewProject = async (e) => {
     e.preventDefault();
 
