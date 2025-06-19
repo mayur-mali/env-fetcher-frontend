@@ -18,10 +18,32 @@ import {
 } from "react-icons/ai";
 import BorderProgressBox from "../components/BorderProgressBox";
 import { TbFileTypeTxt } from "react-icons/tb";
-import { MdOutlineDelete } from "react-icons/md";
+import { MdDelete, MdModeEdit, MdOutlineDelete } from "react-icons/md";
 import { CgCopy } from "react-icons/cg";
 import { FcFolder } from "react-icons/fc";
 import TagInput from "../components/TagInput";
+
+const randomColor = (randomNumber) => {
+  const colorClasses = [
+    "bg-red-100 text-red-800",
+    "bg-green-100 text-green-800",
+    "bg-blue-100 text-blue-800",
+    "bg-yellow-100 text-yellow-800",
+    "bg-pink-100 text-pink-800",
+    "bg-purple-100 text-purple-800",
+    "bg-indigo-100 text-indigo-800",
+    "bg-teal-100 text-teal-800",
+    "bg-orange-100 text-orange-800",
+    "bg-emerald-100 text-emerald-800",
+    "bg-cyan-100 text-cyan-800",
+    "bg-lime-100 text-lime-800",
+    "bg-rose-100 text-rose-800",
+    "bg-sky-100 text-sky-800",
+    "bg-violet-100 text-violet-800",
+  ];
+
+  return colorClasses[randomNumber];
+};
 
 const UploadEnvironmentFile = ({ projectId }: any) => {
   let [isOpen, setIsOpen] = useState(false);
@@ -419,11 +441,16 @@ export default function Project() {
               className="border border-gray-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             <label className="text-sm font-semibold">Tags</label>
-            <TagInput tags={projectDetails.tags} setTags={setProjectDetails} />
+            <TagInput tags={projectDetails} setTags={setProjectDetails} />
             <button
               type="submit"
-              disabled={createProjectLoading}
-              className="px-4 py-2 h-10 disabled:bg-custom-black/50 bg-custom-black text-white rounded hover:bg-custom-black/90 cursor-pointer transition-colors"
+              disabled={
+                createProjectLoading ||
+                !projectDetails.name ||
+                !projectDetails.description ||
+                projectDetails.tags.length === 0
+              }
+              className="px-4 py-2 h-10 disabled:bg-custom-black/50 disabled:cursor-not-allowed bg-custom-black text-white rounded hover:bg-custom-black/90 cursor-pointer transition-colors"
             >
               {createProjectLoading ? (
                 <AiOutlineLoading3Quarters className=" animate-spin mx-auto" />
@@ -451,17 +478,22 @@ export default function Project() {
         data={[
           [
             "Project Name",
+            "Tags",
             "Project Id",
             "Created At",
             "Generate Token",
             "Upload Env",
+            "Action",
           ],
           ...(projects
-            ? projects?.map((project) => [
+            ? projects?.map((project, index) => [
                 <div className="flex flex-col gap-y-4">
                   <div className="flex gap-x-2 items-center">
                     <FcFolder className="text-xl shrink-0" />
-                    <p className="font-bold text-lg">{project.name}</p>
+                    <p className="font-medium text-md flex items-start gap-x-2">
+                      {project.name}{" "}
+                      <MdModeEdit className="text-[9px] cursor-pointer" />
+                    </p>
                   </div>
 
                   {project?.envFiles && project?.envFiles.length > 0 && (
@@ -469,7 +501,7 @@ export default function Project() {
                       {project.envFiles.map((envFile, idx) => (
                         <span
                           className={
-                            "px-3 font-bold text-[10px] py-1 w-fit rounded-[20px] " +
+                            "px-3 font-bold text-[9px] py-1 w-fit rounded-[20px] " +
                             (envFile.envType === "dev"
                               ? "bg-green-200 text-green-800"
                               : envFile.envType === "test"
@@ -489,12 +521,38 @@ export default function Project() {
                     </span>
                   )}
                 </div>,
-                project._id,
-                project.createdAt
-                  ? new Date(project.createdAt).toLocaleString()
-                  : "-",
+                <div>
+                  {project?.tags && project?.tags.length > 0 && (
+                    <span className="flex flex-wrap gap-2">
+                      {project.tags.map((tag, idx) => {
+                        const colorIndex = Math.floor(
+                          (Math.random() * 14) % 14
+                        );
+                        return (
+                          <span
+                            className={
+                              "px-3 font-bold  text-[9px] py-1 w-fit rounded-full " +
+                              randomColor(colorIndex)
+                            }
+                            key={idx}
+                          >
+                            {tag}{" "}
+                          </span>
+                        );
+                      })}
+                    </span>
+                  )}
+                </div>,
+                <span className="font-bold text-md">{project._id}</span>,
+                <span className="font-medium text-md">
+                  {" "}
+                  {project.createdAt
+                    ? new Date(project.createdAt).toLocaleString()
+                    : "-"}
+                </span>,
                 <GenerateToken projectId={project._id} />,
                 <UploadEnvironmentFile projectId={project._id} />,
+                <MdDelete className="cursor-pointer text-xl" />,
               ])
             : []),
         ]}
