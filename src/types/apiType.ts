@@ -53,3 +53,20 @@ export interface GenerateProjectToken {
   envType: string | undefined;
   token?: string | undefined;
 }
+
+export interface CreateGroup {
+  name: string;
+  description?: string;
+  message?: string;
+  group?: {
+    id: string;
+    name: string;
+    admin: string;
+    description?: string;
+    developers: string[];
+    access: string[];
+    _id: string;
+    createdAt: string;
+    updatedAt: string;
+  };
+}

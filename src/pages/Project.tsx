@@ -501,7 +501,7 @@ export default function Project() {
                       {project.envFiles.map((envFile, idx) => (
                         <span
                           className={
-                            "px-3 font-bold text-[9px] py-1 w-fit rounded-[20px] " +
+                            "px-3 font-bold  text-[9px] py-1 w-fit rounded-full " +
                             (envFile.envType === "dev"
                               ? "bg-green-200 text-green-800"
                               : envFile.envType === "test"

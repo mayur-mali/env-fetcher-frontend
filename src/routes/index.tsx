@@ -12,6 +12,7 @@ import Project from "../pages/Project";
 import Developers from "../pages/Developers";
 import MainLayout from "../layouts/MainLayout";
 import AuthLayout from "../layouts/AuthLayout";
+import Groups from "../pages/Groups";
 
 const router = createBrowserRouter([
   {
@@ -25,6 +26,7 @@ const router = createBrowserRouter([
       { index: true, element: <Dashboard /> },
       { path: "/project", element: <Project /> },
       { path: "/developer", element: <Developers /> },
+      { path: "/group", element: <Groups /> },
     ],
   },
   {

@@ -8,6 +8,7 @@ import {
   UploadEnvFile,
   CreateDeveloper,
   GenerateProjectToken,
+  CreateGroup,
 } from "../types/apiType";
 
 export const registerApi = async ({
@@ -95,7 +96,7 @@ export const createDeveloperApi = async ({
   name,
   password,
 }: CreateDeveloper): Promise<CreateDeveloper> => {
-  const res = await axios.post<CreateDeveloper>("/api/admin/create-developer", {
+  const res = await axios.post<CreateDeveloper>("/api/developer", {
     email,
     name,
     password,
@@ -106,7 +107,7 @@ export const createDeveloperApi = async ({
 };
 
 export const getAllDevelopersApi = async (): Promise<CreateDeveloper[]> => {
-  const res = await axios.get<CreateDeveloper[]>("/api/developer/all");
+  const res = await axios.get<CreateDeveloper[]>("/api/developer");
   return res.data;
 };
 
@@ -146,5 +147,35 @@ export const verifyOtpApi = async (
   });
 
   if (res.statusText !== "OK") throw new Error("OTP verification failed");
+  return res.data;
+};
+
+export const createGroupApi = async ({
+  name,
+  description,
+}: {
+  name: string;
+  description?: string;
+}): Promise<CreateGroup> => {
+  const res = await axios.post<CreateGroup>("/api/groups", {
+    name,
+    description,
+  });
+
+  if (!res.data) throw new Error("Group creation failed");
+  return res.data;
+};
+
+export const getAllGroupsApi = async (): Promise<{ groups: any[] }> => {
+  const res = await axios.get<{ groups: any[] }>("/api/groups");
+  if (!res.data) throw new Error("No groups found");
+  return res.data;
+};
+
+export const deleteGroupApi = async (
+  groupId: string
+): Promise<{ message: string }> => {
+  const res = await axios.delete<{ message: string }>(`/api/groups/${groupId}`);
+  if (res.status !== 200) throw new Error("Failed to delete group");
   return res.data;
 };

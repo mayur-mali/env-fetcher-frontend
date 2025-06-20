@@ -22,6 +22,7 @@ const Sidebar = () => {
           <SidebarItem icon={<FaHome />} label="" />
           <SidebarItem icon={<FaBox />} label="Project" />
           <SidebarItem icon={<FaList />} label="Developer" />
+          <SidebarItem icon={<FaTags />} label="Group" />
         </nav>
       </div>
 
