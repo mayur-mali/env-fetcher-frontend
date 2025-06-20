@@ -4,6 +4,8 @@ import { useState } from "react";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
 import { useAuth } from "../contexts/AuthContext";
 import { loginApi } from "../services/api";
+import LoginWithGoogle from "../components/LoginWithGoogle";
+import GitHubLoginButton from "../components/GitHubLoginButton";
 
 export default function Login() {
   const [loading, setLoading] = useState(false);
@@ -70,6 +72,20 @@ export default function Login() {
             )}
           </button>
         </form>
+        <div className="flex items-center justify-between my-4">
+          <hr className="w-full border-gray-300" />
+          <span className="px-2 text-gray-500">OR</span>
+          <hr className="w-full border-gray-300" />
+        </div>
+
+        <div className="flex items-center gap-x-4">
+          <div className="w-full">
+            <LoginWithGoogle text="signin_with" />
+          </div>
+          <div className="w-full">
+            <GitHubLoginButton text={"signin_with"} />
+          </div>
+        </div>
         <div className="mt-6 text-center">
           <p className="text-gray-600">
             Don't have an account?{" "}

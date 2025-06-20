@@ -7,6 +7,8 @@ import { toast } from "react-toastify";
 import { registerApi, verifyOtpApi } from "../services/api";
 import { MdOutlineMarkEmailRead } from "react-icons/md";
 import { IoMdArrowRoundBack } from "react-icons/io";
+import LoginWithGoogle from "../components/LoginWithGoogle";
+import GitHubLoginButton from "../components/GitHubLoginButton";
 interface OTPVerificationProps {
   email: string;
   onVerificationSuccess: (user: any) => void;
@@ -349,6 +351,20 @@ function Signup() {
               )}
             </button>
           </form>
+          <div className="flex items-center justify-between my-4">
+            <hr className="w-full border-gray-300" />
+            <span className="px-2 text-gray-500">OR</span>
+            <hr className="w-full border-gray-300" />
+          </div>
+
+          <div className="flex items-center gap-x-4">
+            <div className="w-full">
+              <LoginWithGoogle text={"signup_with"} />
+            </div>
+            <div className="w-full">
+              <GitHubLoginButton text={"signup_with"} />
+            </div>
+          </div>
 
           <div className="mt-6 text-center">
             <p className="text-gray-600">

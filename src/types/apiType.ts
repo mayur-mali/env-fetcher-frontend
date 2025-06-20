@@ -1,5 +1,5 @@
 export interface AuthResponse {
-  message: string;
+  message?: string;
   token?: string | null | undefined;
   admin?: User;
 }

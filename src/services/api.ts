@@ -179,3 +179,15 @@ export const deleteGroupApi = async (
   if (res.status !== 200) throw new Error("Failed to delete group");
   return res.data;
 };
+
+export const logInWithGoogleApi = async (
+  token: string | undefined
+): Promise<AuthResponse> => {
+  if (!token) throw new Error("Google token is required");
+
+  const res = await axios.post<AuthResponse>("/api/admin/google-login", {
+    token,
+  });
+
+  return res.data;
+};
