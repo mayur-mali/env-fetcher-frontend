@@ -13,6 +13,7 @@ import Developers from "../pages/Developers";
 import MainLayout from "../layouts/MainLayout";
 import AuthLayout from "../layouts/AuthLayout";
 import Groups from "../pages/Groups";
+import GithubCallback from "../pages/callback/GithubCallback";
 
 const router = createBrowserRouter([
   {
@@ -56,6 +57,10 @@ const router = createBrowserRouter([
         element: <Signup />,
       },
     ],
+  },
+  {
+    path: "/auth/github/callback",
+    element: <GithubCallback />,
   },
   {
     path: "*",

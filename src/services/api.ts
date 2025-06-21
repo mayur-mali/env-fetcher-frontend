@@ -191,3 +191,32 @@ export const logInWithGoogleApi = async (
 
   return res.data;
 };
+
+export const githubCallBackApi = async (
+  code: string
+): Promise<{ token: string }> => {
+  if (!code) throw new Error("GitHub code is required");
+
+  const res = await axios.post<{ token: string }>("/api/auth/github-exchange", {
+    code,
+  });
+
+  if (res.status !== 200) throw new Error("GitHub callback failed");
+  return { token: res.data.token };
+};
+export const logInWithGithubApi = async ({
+  token,
+  provider,
+}: {
+  token: string;
+  provider: string;
+}): Promise<AuthResponse> => {
+  if (!token) throw new Error("GitHub token is required");
+
+  const res = await axios.post<AuthResponse>("/api/admin/login", {
+    provider,
+    token,
+  });
+
+  return res.data;
+};

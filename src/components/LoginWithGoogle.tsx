@@ -41,7 +41,6 @@ export default function LoginWithGoogle({ text }: LoginWithGoogleProps) {
   return (
     <GoogleLogin
       text={text}
-      width={"100%"}
       theme="filled_black"
       shape="rectangular"
       logo_alignment="left"
