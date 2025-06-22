@@ -26,6 +26,7 @@ export interface ProjectResponse {
   recentActivities?: any[];
   createdAt: string;
   updatedAt: string;
+  status?: string | undefined;
 }
 
 export interface CreateProjectRequest {

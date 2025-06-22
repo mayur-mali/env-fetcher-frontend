@@ -2,7 +2,7 @@ import { GoogleLogin } from "@react-oauth/google";
 import axios from "axios";
 import React from "react";
 import { FcGoogle } from "react-icons/fc";
-import { logInWithGoogleApi } from "../services/api";
+import { logInWithAuth } from "../services/api";
 import { useAuth } from "../contexts/AuthContext";
 
 type LoginWithGoogleProps = {
@@ -26,7 +26,10 @@ export default function LoginWithGoogle({ text }: LoginWithGoogleProps) {
   // });
   const handleSuccess = async (credentialResponse) => {
     try {
-      const res = await logInWithGoogleApi(credentialResponse.credential);
+      const res = await logInWithAuth({
+        provider: "google",
+        token: credentialResponse.credential,
+      });
       localStorage.setItem("token", res.token ?? "");
       await getUser();
     } catch (err) {

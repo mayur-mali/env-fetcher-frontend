@@ -6,7 +6,7 @@ export default function Card({
   icon,
 }: {
   label: string;
-  value: string;
+  value: string | number;
   icon?: React.ReactNode;
 }) {
   return (

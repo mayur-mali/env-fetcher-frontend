@@ -1,9 +1,9 @@
-import { NavLink, useNavigate } from "react-router-dom";
-import loginSvg from "../assets/login.svg";
+import { NavLink } from "react-router-dom";
+
 import { useState } from "react";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
 import { useAuth } from "../contexts/AuthContext";
-import { loginApi } from "../services/api";
+import { logInWithAuth } from "../services/api";
 import LoginWithGoogle from "../components/LoginWithGoogle";
 import GitHubLoginButton from "../components/GitHubLoginButton";
 
@@ -23,7 +23,11 @@ export default function Login() {
     }
     setLoading(true);
     try {
-      const data = await loginApi(email.toString(), password.toString());
+      const data = await logInWithAuth({
+        provider: "local",
+        email: email.toString(),
+        password: password.toString(),
+      });
       localStorage.setItem("token", data.token ?? "");
       await getUser();
     } catch (error) {

@@ -362,7 +362,7 @@ function Signup() {
               <LoginWithGoogle text={"signup_with"} />
             </div>
             <div className="w-full">
-              {/* <GitHubLoginButton text={"signup_with"} /> */}
+              <GitHubLoginButton text={"signup_with"} />
             </div>
           </div>
 

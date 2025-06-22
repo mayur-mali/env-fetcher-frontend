@@ -14,6 +14,7 @@ import MainLayout from "../layouts/MainLayout";
 import AuthLayout from "../layouts/AuthLayout";
 import Groups from "../pages/Groups";
 import GithubCallback from "../pages/callback/GithubCallback";
+import TokenGenerate from "../pages/TokenGenerate";
 
 const router = createBrowserRouter([
   {
@@ -28,6 +29,7 @@ const router = createBrowserRouter([
       { path: "/project", element: <Project /> },
       { path: "/developer", element: <Developers /> },
       { path: "/group", element: <Groups /> },
+      { path: "/token-generate", element: <TokenGenerate /> },
     ],
   },
   {

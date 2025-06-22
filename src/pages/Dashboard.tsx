@@ -10,26 +10,45 @@ import { MdGroups, MdVpnLock } from "react-icons/md";
 import { BsGraphUpArrow } from "react-icons/bs";
 import { Table } from "../components/Table";
 import { getAllActivitiesApi, getDashboardStatsApi } from "../services/api";
+import RecentActivityFeed from "../components/RecentActivityFeed";
+import { DrawerWrapper } from "../components/DrawerWrapper";
+interface DashboardState {
+  stats: {
+    totalProjects: number;
+    totalDevelopers: number;
+    totalGroups: number;
+    totalTokens: number;
+  };
+  recentActivities: any[];
+}
 export default function Dashboard() {
   const { user, logout } = useAuth();
-  const [activities, setActivities] = React.useState<any>([]);
-  const [loading, setLoading] = React.useState(false);
-  // useEffect(() => {
-  //   const fetchActivity = async () => {
-  //     try {
-  //       setLoading(true);
-  //       const activities = await getAllActivitiesApi();
-  //       const dashboardState = await getDashboardStatsApi();
-  //       console.log(dashboardState);
 
-  //       setActivities(activities);
-  //     } catch (err) {
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   };
-  //   fetchActivity();
-  // }, []);
+  const [dashboardState, setDashboardState] = React.useState<DashboardState>({
+    stats: {
+      totalProjects: 0,
+      totalDevelopers: 0,
+      totalGroups: 0,
+      activeTokens: 0,
+    },
+    recentActivities: [],
+  });
+
+  const [loading, setLoading] = React.useState(false);
+  useEffect(() => {
+    const fetchActivity = async () => {
+      try {
+        setLoading(true);
+
+        const dashboardState = await getDashboardStatsApi();
+        setDashboardState(dashboardState as DashboardState);
+      } catch (err) {
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchActivity();
+  }, []);
   return (
     <div className="">
       <p className="text-2xl ml-4 text-gray-800">Quick State</p>
@@ -37,23 +56,23 @@ export default function Dashboard() {
         <Card
           label="Total Projects"
           icon={<BsGraphUpArrow className="text-3xl" />}
-          value={user?.firstName || "Guest"}
+          value={dashboardState.stats.totalProjects || 0}
         />
         <Card
           label="Developers"
           icon={<AiOutlineUsergroupAdd className="text-3xl" />}
-          value={user?.email || "Not logged in"}
+          value={dashboardState.stats.totalDevelopers || 0}
         />
         <Card
           label="Groups"
           icon={<MdGroups className="text-3xl" />}
-          value={user?.role || "Not assigned"}
+          value={dashboardState.stats.totalGroups || 0}
         />
         <Card
           label="Active Tokens
 "
           icon={<MdVpnLock className="text-3xl" />}
-          value="0"
+          value={dashboardState.stats.totalTokens || 0}
         />
       </div>
       <p className="text-2xl ml-4 text-gray-800">Quick Action</p>
@@ -66,23 +85,13 @@ export default function Dashboard() {
         />
         <NavButton path="/group" label="Create Group" icon={<MdGroups />} />
         <NavButton
-          path="/generate-token"
+          path="/token-generate"
           label="Generate Token"
           icon={<MdVpnLock />}
         />
       </div>
-      <p className="text-2xl ml-4 text-gray-800">Recent Activity</p>
-      <Table
-        minHeight=" min-h-auto"
-        boxPadding=" p-0"
-        data={[
-          ["Activity", "Activity Date"],
-          ...activities.map((activity) => [
-            activity.message,
-            new Date(activity.createdAt).toLocaleString(),
-          ]),
-        ]}
-      />
+
+      <RecentActivityFeed activities={dashboardState.recentActivities || []} />
     </div>
   );
 }

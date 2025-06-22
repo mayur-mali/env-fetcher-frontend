@@ -16,12 +16,15 @@ import {
   AiOutlineLoading3Quarters,
   AiTwotoneInteraction,
 } from "react-icons/ai";
+import { HiOutlineDotsVertical } from "react-icons/hi";
 import BorderProgressBox from "../components/BorderProgressBox";
 import { TbFileTypeTxt } from "react-icons/tb";
 import { MdDelete, MdModeEdit, MdOutlineDelete } from "react-icons/md";
 import { CgCopy } from "react-icons/cg";
 import { FcFolder } from "react-icons/fc";
 import TagInput from "../components/TagInput";
+import { DrawerWrapper } from "../components/DrawerWrapper";
+import EnvVersionsCompare from "../components/project-ui/EnvVersionsCompare";
 
 const randomColor = (randomNumber) => {
   const colorClasses = [
@@ -43,6 +46,125 @@ const randomColor = (randomNumber) => {
   ];
 
   return colorClasses[randomNumber];
+};
+
+const ProjectDetailsCard = ({ heading, subheading }) => {
+  return (
+    <div>
+      <span className="text-sm text-gray-600">{heading}</span>
+      <p className="text-gray-800">{subheading}</p>
+    </div>
+  );
+};
+
+const UpdateDrawer = ({ project }) => {
+  let [isOpen, setIsOpen] = useState(false);
+  return (
+    <>
+      <HiOutlineDotsVertical
+        onClick={() => setIsOpen(true)}
+        className="cursor-pointer text-xl"
+      />
+      <Modal
+        customDimensions={{
+          width: "w-[500px]",
+          height: "h-full",
+        }}
+        type="drawer"
+        position="right"
+        open={isOpen}
+        setOpen={setIsOpen}
+      >
+        <div className="mt-4 ">
+          <p className="text-md border-b border-gray-300 pb-2">
+            PROJECT OVERVIEW
+          </p>
+
+          <div className="grid grid-cols-2 gap-4 mt-2">
+            <ProjectDetailsCard
+              heading={"Project Name"}
+              subheading={project.name}
+            />
+            <ProjectDetailsCard
+              heading={"Last Updated"}
+              subheading={new Date(project.updatedAt).toLocaleString()}
+            />
+
+            <ProjectDetailsCard
+              heading={"Description"}
+              subheading={project.description || "No description provided"}
+            />
+            <ProjectDetailsCard
+              heading={"Project ID"}
+              subheading={project._id}
+            />
+            <ProjectDetailsCard
+              heading={"Created"}
+              subheading={new Date(project.createdAt).toLocaleString()}
+            />
+            <ProjectDetailsCard
+              heading={"Status"}
+              subheading={
+                <div className="flex items-center space-x-2">
+                  <span className="relative inline-flex h-2 w-2">
+                    <span
+                      className={`animate-ping absolute inline-flex h-full w-full rounded-full ${
+                        project.status === "active"
+                          ? "bg-green-400"
+                          : "bg-gray-400"
+                      } opacity-75`}
+                    ></span>
+                    <span
+                      className={`relative inline-flex rounded-full h-2 w-2 ${
+                        project.status === "active"
+                          ? "bg-green-500"
+                          : "bg-gray-500"
+                      }`}
+                    ></span>
+                  </span>
+                  <span className="text-sm font-medium text-gray-700">
+                    {project.status
+                      ? project.status.charAt(0).toUpperCase() +
+                        project.status.slice(1)
+                      : ""}
+                  </span>
+                </div>
+              }
+            />
+          </div>
+        </div>
+        <div className="mt-4 ">
+          <p className="text-md border-b border-gray-300 pb-2">
+            TECHNICAL STACK
+          </p>
+          <div>
+            {project?.tags && project.tags.length > 0 ? (
+              <div className="flex flex-wrap gap-2 mt-2">
+                {project.tags.map((tag, index) => (
+                  <span
+                    key={index}
+                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${randomColor(
+                      index % 14
+                    )}`}
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <p className="text-gray-500 mt-2">No tags available</p>
+            )}
+          </div>
+        </div>
+        <EnvVersionsCompare environmentFiles={project?.envFiles} />
+        <h3 className="text-sm font-medium text-gray-900 my-3">Action</h3>
+        <div className="flex justify-between items-center gap-x-4">
+          <UploadEnvironmentFile projectId={project._id} />
+          <GenerateToken projectId={project._id} />
+        </div>
+      </Modal>
+    </>
+  );
 };
 
 const UploadEnvironmentFile = ({ projectId }: any) => {
@@ -118,9 +240,9 @@ const UploadEnvironmentFile = ({ projectId }: any) => {
   };
 
   return (
-    <div>
+    <div className="w-full">
       <Modal
-        hasChanged={true}
+        hasChanged={false}
         title={"Upload Files"}
         open={isOpen}
         setOpen={setIsOpen}
@@ -253,10 +375,13 @@ const UploadEnvironmentFile = ({ projectId }: any) => {
         </form>
       </Modal>
 
-      <PiUploadDuotone
+      <button
         onClick={() => setIsOpen(true)}
-        className="text-2xl cursor-pointer"
-      />
+        className="flex cursor-pointer text-sm w-full items-center justify-between p-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors duration-150"
+      >
+        Upload Environment File
+        <PiUploadDuotone className="text-2xl cursor-pointer" />
+      </button>
     </div>
   );
 };
@@ -265,7 +390,7 @@ const GenerateToken = ({ projectId }: any) => {
   const [loading, setLoading] = useState(false);
   const [token, setToken] = useState<string>("");
   return (
-    <div>
+    <div className="w-full">
       <Modal
         hasChanged={true}
         title={"Upload Files"}
@@ -335,10 +460,13 @@ const GenerateToken = ({ projectId }: any) => {
         </form>
       </Modal>
 
-      <AiTwotoneInteraction
+      <button
         onClick={() => setIsOpen(true)}
-        className="text-2xl cursor-pointer"
-      />
+        className="flex cursor-pointer text-sm w-full items-center justify-between p-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors duration-150"
+      >
+        Generate Token
+        <AiFillInteraction className="text-2xl cursor-pointer" />
+      </button>
     </div>
   );
 };
@@ -476,27 +604,16 @@ export default function Project() {
         }
         loading={loading}
         data={[
-          [
-            "Project Name",
-            "Tags",
-            "Project Id",
-            "Created At",
-            "Generate Token",
-            "Upload Env",
-            "Action",
-          ],
+          ["Project Name", "Project Id", "Created At", "Status", "Action"],
           ...(projects
             ? projects?.map((project, index) => [
                 <div className="flex flex-col gap-y-4">
                   <div className="flex gap-x-2 items-center">
                     <FcFolder className="text-xl shrink-0" />
-                    <p className="font-medium text-md flex items-start gap-x-2">
-                      {project.name}{" "}
-                      <MdModeEdit className="text-[9px] cursor-pointer" />
-                    </p>
+                    <p className="font-medium text-md ">{project.name} </p>
                   </div>
 
-                  {project?.envFiles && project?.envFiles.length > 0 && (
+                  {/* {project?.envFiles && project?.envFiles.length > 0 && (
                     <span className="flex flex-wrap gap-2">
                       {project.envFiles.map((envFile, idx) => (
                         <span
@@ -519,40 +636,42 @@ export default function Project() {
                         </span>
                       ))}
                     </span>
-                  )}
+                  )} */}
                 </div>,
-                <div>
-                  {project?.tags && project?.tags.length > 0 && (
-                    <span className="flex flex-wrap gap-2">
-                      {project.tags.map((tag, idx) => {
-                        const colorIndex = Math.floor(
-                          (Math.random() * 14) % 14
-                        );
-                        return (
-                          <span
-                            className={
-                              "px-3 font-bold  text-[9px] py-1 w-fit rounded-full " +
-                              randomColor(colorIndex)
-                            }
-                            key={idx}
-                          >
-                            {tag}{" "}
-                          </span>
-                        );
-                      })}
-                    </span>
-                  )}
-                </div>,
-                <span className="font-bold text-md">{project._id}</span>,
+
+                <span className="text-md">{project._id}</span>,
                 <span className="font-medium text-md">
                   {" "}
                   {project.createdAt
                     ? new Date(project.createdAt).toLocaleString()
                     : "-"}
                 </span>,
-                <GenerateToken projectId={project._id} />,
-                <UploadEnvironmentFile projectId={project._id} />,
-                <MdDelete className="cursor-pointer text-xl" />,
+
+                <div className="flex items-center space-x-2">
+                  <span className="relative inline-flex h-2 w-2">
+                    <span
+                      className={`animate-ping absolute inline-flex h-full w-full rounded-full ${
+                        project.status === "active"
+                          ? "bg-green-400"
+                          : "bg-gray-400"
+                      } opacity-75`}
+                    ></span>
+                    <span
+                      className={`relative inline-flex rounded-full h-2 w-2 ${
+                        project.status === "active"
+                          ? "bg-green-500"
+                          : "bg-gray-500"
+                      }`}
+                    ></span>
+                  </span>
+                  <span className="text-sm font-medium text-gray-700">
+                    {project.status
+                      ? project.status.charAt(0).toUpperCase() +
+                        project.status.slice(1)
+                      : ""}
+                  </span>
+                </div>,
+                <UpdateDrawer project={project} />,
               ])
             : []),
         ]}

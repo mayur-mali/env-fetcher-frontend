@@ -1,13 +1,15 @@
 // src/pages/auth/github/callback.jsx
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { githubCallBackApi, logInWithGithubApi } from "../../services/api";
+import { githubCallBackApi, logInWithAuth } from "../../services/api";
 import { useAuth } from "../../contexts/AuthContext";
+import Loading from "../../components/loading";
 
 const GithubCallback = () => {
   const navigate = useNavigate();
   const { getUser } = useAuth();
+  const [loading, setLoading] = useState(false);
   useEffect(() => {
     const handleGithubRedirect = async () => {
       const urlParams = new URLSearchParams(window.location.search);
@@ -19,28 +21,31 @@ const GithubCallback = () => {
       }
 
       try {
-        // 1. Exchange code for access token
+        setLoading(true);
         const tokenRes = await githubCallBackApi(code);
 
-        const res = await logInWithGithubApi({
+        const res = await logInWithAuth({
           token: tokenRes.token,
           provider: "github",
         });
 
-        console.log("GitHub login successful:", res);
-
-        // localStorage.setItem("token", res.token ?? "");
-        // await getUser();
+        if (!res || !res.token) {
+          throw new Error("Login failed, no token received");
+        } else {
+          localStorage.setItem("token", res.token ?? "");
+          window.location.href = "/";
+        }
       } catch (err) {
-        console.error(err);
-        // alert("GitHub login failed.");
-        // navigate("/login");
+        setLoading(false);
+        console.log("GitHub login error:", err);
+      } finally {
+        setLoading(false);
       }
     };
 
     handleGithubRedirect();
   }, [navigate]);
-
+  if (loading) return <Loading />;
   return <p>Logging in with GitHub...</p>;
 };
 

@@ -132,7 +132,7 @@ export const getAllActivitiesApi = async (): Promise<[]> => {
 };
 
 export const getDashboardStatsApi = async (): Promise<{}> => {
-  const res = await axios.get<{}>("/api/activity/dashboard/stats");
+  const res = await axios.get<{}>("/api/dashboard/stats");
   if (!res.data) throw new Error("No dashboard stats found");
   return res.data;
 };
@@ -180,18 +180,6 @@ export const deleteGroupApi = async (
   return res.data;
 };
 
-export const logInWithGoogleApi = async (
-  token: string | undefined
-): Promise<AuthResponse> => {
-  if (!token) throw new Error("Google token is required");
-
-  const res = await axios.post<AuthResponse>("/api/admin/google-login", {
-    token,
-  });
-
-  return res.data;
-};
-
 export const githubCallBackApi = async (
   code: string
 ): Promise<{ token: string }> => {
@@ -204,19 +192,43 @@ export const githubCallBackApi = async (
   if (res.status !== 200) throw new Error("GitHub callback failed");
   return { token: res.data.token };
 };
-export const logInWithGithubApi = async ({
+export const logInWithAuth = async ({
   token,
   provider,
+  email,
+  password,
 }: {
-  token: string;
-  provider: string;
+  token?: string;
+  provider?: string;
+  email?: string;
+  password?: string;
 }): Promise<AuthResponse> => {
-  if (!token) throw new Error("GitHub token is required");
-
   const res = await axios.post<AuthResponse>("/api/admin/login", {
+    email,
+    password,
     provider,
     token,
   });
 
+  return res.data;
+};
+
+export const compareEvnVersionsApi = async ({
+  projectId,
+  envType,
+  version1,
+  version2,
+}: {
+  projectId: string;
+  envType: string;
+  version1: string;
+  version2: string;
+}): Promise<{
+  result: { left: string; right: string; change: "added" | "removed" }[];
+}> => {
+  const res = await axios.get<{
+    result: { left: string; right: string; change: "added" | "removed" }[];
+  }>(`/api/env/compare/${projectId}/${envType}/${version1}/${version2}`);
+  if (!res.data) throw new Error("No changes found");
   return res.data;
 };

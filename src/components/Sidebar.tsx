@@ -23,12 +23,13 @@ const Sidebar = () => {
           <SidebarItem icon={<FaBox />} label="Project" />
           <SidebarItem icon={<FaList />} label="Developer" />
           <SidebarItem icon={<FaTags />} label="Group" />
+          <SidebarItem icon={<FaUsers />} label="Token Generate" />
         </nav>
       </div>
 
       <button
         onClick={() => logout()}
-        className="flex items-center space-x-2 text-sm mt-8 hover:text-gray-400"
+        className="flex items-center hover:bg-red-800/30 hover:text-red-300 px-4 cursor-pointer h-10 rounded-md text-gray-300 text-lg space-x-2 mt-8 "
       >
         <FaSignOutAlt />
         <span>Logout</span>
@@ -39,25 +40,16 @@ const Sidebar = () => {
 
 const SidebarItem = ({ icon, label }) => (
   <NavLink
-    to={`/${label.toLowerCase()}`}
+    to={`/${label.toLowerCase().replaceAll(" ", "-")}`}
     className={({ isActive }) =>
-      `flex items-center space-x-3 py-2 px-4 rounded-full cursor-pointer ${
-        isActive ? "bg-white text-black font-semibold" : "hover:bg-gray-800"
+      `flex items-center transition duration-300 space-x-3 py-2 px-4 rounded-full cursor-pointer ${
+        isActive ? "bg-white text-black font-semibold" : "hover:bg-white/10"
       }`
     }
   >
     <span className="text-lg">{icon}</span>
     <span>{label === "" ? "Overview" : label}</span>
   </NavLink>
-
-  /* <div
-    className={`flex items-center space-x-3 p-2 rounded-md cursor-pointer ${
-      active ? "bg-white text-black font-semibold" : "hover:bg-gray-800"
-    }`}
-  >
-    <span className="text-lg">{icon}</span>
-    <span>{label}</span>
-  </div> */
 );
 
 export default Sidebar;
