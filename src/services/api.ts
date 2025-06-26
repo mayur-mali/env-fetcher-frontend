@@ -10,6 +10,7 @@ import {
   GenerateProjectToken,
   CreateGroup,
 } from "../types/apiType";
+import { DashboardState } from "src/pages/Dashboard";
 
 export const registerApi = async ({
   firstName,
@@ -53,8 +54,10 @@ export const getUserApi = async (): Promise<User> => {
   return res.data.admin;
 };
 
-export const getAllProjectsApi = async (): Promise<ProjectResponse> => {
-  const res = await axios.get<ProjectResponse>("/api/project");
+export const getAllProjectsApi = async (): Promise<
+  ProjectResponse[] | null
+> => {
+  const res = await axios.get<ProjectResponse[]>("/api/project");
   return res.data;
 };
 
@@ -114,14 +117,13 @@ export const getAllDevelopersApi = async (): Promise<CreateDeveloper[]> => {
 export const generateProjectToken = async ({
   projectId,
   envType,
+  description,
 }: GenerateProjectToken): Promise<GenerateProjectToken> => {
-  const res = await axios.post<GenerateProjectToken>(
-    "api/project/generate-token",
-    {
-      projectId,
-      envType,
-    }
-  );
+  const res = await axios.post<GenerateProjectToken>("api/token", {
+    projectId,
+    envType,
+    description,
+  });
   return res.data;
 };
 
@@ -131,8 +133,8 @@ export const getAllActivitiesApi = async (): Promise<[]> => {
   return res.data;
 };
 
-export const getDashboardStatsApi = async (): Promise<{}> => {
-  const res = await axios.get<{}>("/api/dashboard/stats");
+export const getDashboardStatsApi = async (): Promise<DashboardState> => {
+  const res = await axios.get<DashboardState>("/api/dashboard/stats");
   if (!res.data) throw new Error("No dashboard stats found");
   return res.data;
 };

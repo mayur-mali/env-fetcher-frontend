@@ -1,11 +1,10 @@
 import React from "react";
 import { useAuth } from "../contexts/AuthContext";
-import { profile } from "console";
+
 import { FaUser } from "react-icons/fa";
 
 export default function Navbar() {
   const { user } = useAuth();
-  console.log("user in navbar", user);
 
   return (
     <div className="pl-64 bg-white w-full fixed">

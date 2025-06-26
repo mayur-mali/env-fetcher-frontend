@@ -67,7 +67,7 @@ const RecentActivityFeed: React.FC<RecentActivityFeedProps> = ({
 }) => {
   return (
     <div className="w-full mx-auto p-4">
-      <div className="bg-white shadow-sm ring-1 ring-gray-900/5 rounded-xl">
+      <div className="bg-white shadow-sm ring-1 ring-gray-900/5 rounded-xl h-auto">
         <div className="p-6">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-lg font-semibold text-gray-900">

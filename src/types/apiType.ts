@@ -41,6 +41,7 @@ export interface UploadEnvFile {
   projectId: string;
   envType: string;
   envFile: string | Blob;
+  message?: string;
 }
 
 export interface CreateDeveloper {
@@ -53,6 +54,13 @@ export interface GenerateProjectToken {
   projectId: string;
   envType: string | undefined;
   token?: string | undefined;
+  description?: string;
+  createdBy?: string;
+  isActive?: boolean;
+  _id?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  __v?: number;
 }
 
 export interface CreateGroup {

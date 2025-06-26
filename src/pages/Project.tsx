@@ -25,6 +25,7 @@ import { FcFolder } from "react-icons/fc";
 import TagInput from "../components/TagInput";
 import { DrawerWrapper } from "../components/DrawerWrapper";
 import EnvVersionsCompare from "../components/project-ui/EnvVersionsCompare";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 const randomColor = (randomNumber) => {
   const colorClasses = [
@@ -156,7 +157,9 @@ const UpdateDrawer = ({ project }) => {
             )}
           </div>
         </div>
-        <EnvVersionsCompare environmentFiles={project?.envFiles} />
+        {project?.envFiles && project?.envFiles.length > 0 ? (
+          <EnvVersionsCompare environmentFiles={project?.envFiles} />
+        ) : null}
         <h3 className="text-sm font-medium text-gray-900 my-3">Action</h3>
         <div className="flex justify-between items-center gap-x-4">
           <UploadEnvironmentFile projectId={project._id} />
@@ -168,6 +171,7 @@ const UpdateDrawer = ({ project }) => {
 };
 
 const UploadEnvironmentFile = ({ projectId }: any) => {
+  const queryClient = useQueryClient();
   let [isOpen, setIsOpen] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -239,6 +243,25 @@ const UploadEnvironmentFile = ({ projectId }: any) => {
     }, intervalTime);
   };
 
+  const mutation = useMutation({
+    mutationFn: uploadEnvironmentFileApi,
+    onSuccess: (data) => {
+      toast.success(data.message);
+      setSelectedFile(null);
+      setUploadProgress(0);
+      setUploading(false);
+      setIsOpen(false);
+      if (inputRef.current) {
+        inputRef.current.value = "";
+      }
+
+      queryClient.invalidateQueries({ queryKey: ["getAllProjects"] });
+    },
+    onError: () => {
+      toast.error("Failed to create project");
+    },
+  });
+
   return (
     <div className="w-full">
       <Modal
@@ -252,14 +275,11 @@ const UploadEnvironmentFile = ({ projectId }: any) => {
             e.preventDefault();
             const formData = new FormData(e.target as HTMLFormElement);
             const envType = formData.get("envType");
-
-            const res = await uploadEnvironmentFileApi({
+            mutation.mutate({
               projectId,
               envType: envType as string,
               envFile: selectedFile as Blob,
             });
-
-            console.log(res);
           }}
         >
           <div className="flex flex-col gap-4">
@@ -387,8 +407,22 @@ const UploadEnvironmentFile = ({ projectId }: any) => {
 };
 const GenerateToken = ({ projectId }: any) => {
   let [isOpen, setIsOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
+
   const [token, setToken] = useState<string>("");
+  const queryClient = useQueryClient();
+  const mutation = useMutation({
+    mutationFn: generateProjectToken,
+    onSuccess: (data) => {
+      toast.success("Token generated successfully");
+      setToken(data.token || "");
+
+      queryClient.invalidateQueries({ queryKey: ["getAllProjects"] });
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to generate token");
+    },
+  });
+
   return (
     <div className="w-full">
       <Modal
@@ -402,18 +436,13 @@ const GenerateToken = ({ projectId }: any) => {
             e.preventDefault();
             const formData = new FormData(e.target as HTMLFormElement);
             const envType = formData.get("envType");
-            try {
-              setLoading(true);
-              const res = await generateProjectToken({
-                projectId: projectId,
-                envType: envType?.toString(),
-              });
-              setToken(res?.token?.toString() ?? "");
-            } catch (error) {
-              // toast.error(error.message);
-            } finally {
-              setLoading(false);
-            }
+            const description = formData.get("description");
+
+            mutation.mutate({
+              projectId: projectId,
+              envType: envType?.toString(),
+              description: description?.toString(),
+            });
           }}
         >
           <div className="flex flex-col gap-4">
@@ -431,30 +460,43 @@ const GenerateToken = ({ projectId }: any) => {
               <option value="prod">Production</option>
               <option value="test">Staging</option>
             </select>
+            <input
+              type="text"
+              name="description"
+              required
+              placeholder="Enter token description (optional)"
+              className="border border-gray-300 rounded p-2 focus:outline-none "
+            />
+            {!mutation.isPending && token && (
+              <div className="rounded-md h-20 flex justify-between items-center p-4 bg-gray-50 border border-gray-200">
+                <p className=" max-w-2xl truncate">{token}</p>
 
-            <div className="rounded-md h-20 flex justify-between items-center p-4 bg-gray-50 border border-gray-200">
-              <p className=" max-w-2xl truncate">{token}</p>
-              <CgCopy
-                onClick={() => {
-                  navigator.clipboard
-                    .writeText(token)
-                    .then(() => {
-                      toast.success("Copied to clipboard");
-                    })
-                    .catch((err) => {
-                      toast.error("Error while copying");
-                    });
-                }}
-                className="text-2xl cursor-pointer"
-              />
-            </div>
+                <CgCopy
+                  onClick={() => {
+                    navigator.clipboard
+                      .writeText(token)
+                      .then(() => {
+                        toast.success("Copied to clipboard");
+                      })
+                      .catch((err) => {
+                        toast.error("Error while copying");
+                      });
+                  }}
+                  className="text-2xl cursor-pointer"
+                />
+              </div>
+            )}
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={mutation.isPending}
               className="px-4 py-2 h-10 disabled:bg-custom-black/50 bg-custom-black text-white rounded hover:bg-custom-black/90 cursor-pointer transition-colors"
             >
-              Generate Token
+              {mutation.isPending ? (
+                <AiOutlineLoading3Quarters className=" animate-spin mx-auto" />
+              ) : (
+                "Generate Token"
+              )}
             </button>
           </div>
         </form>
@@ -472,11 +514,7 @@ const GenerateToken = ({ projectId }: any) => {
 };
 
 export default function Project() {
-  const [projects, setProjects] = React.useState<ProjectResponse[] | null>([]);
-  const [loading, setLoading] = React.useState<boolean>(true);
-  const [createProjectLoading, setCreateProjectLoading] =
-    useState<boolean>(false);
-  const [tags, setTags] = useState([]);
+  const queryClient = useQueryClient();
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [projectDetails, setProjectDetails] = useState<{
     name: string;
@@ -488,19 +526,24 @@ export default function Project() {
     tags: [],
   });
 
-  useEffect(() => {
-    const fetchProjects = async () => {
-      try {
-        const data = await getAllProjectsApi();
-        setProjects(Array.isArray(data) ? data : [data]);
-      } catch (error) {
-        console.error("Failed to fetch projects:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchProjects();
-  }, []);
+  const { data, isLoading } = useQuery<ProjectResponse[] | null>({
+    queryKey: ["getAllProjects"],
+    queryFn: getAllProjectsApi,
+    staleTime: 0,
+  });
+  const mutation = useMutation({
+    mutationFn: createProjectApi,
+    onSuccess: () => {
+      toast.success("Project created successfully");
+      setIsOpen(false);
+      setProjectDetails({ name: "", description: "", tags: [] });
+
+      queryClient.invalidateQueries({ queryKey: ["getAllProjects"] });
+    },
+    onError: () => {
+      toast.error("Failed to create project");
+    },
+  });
 
   const createNewProject = async (e) => {
     e.preventDefault();
@@ -509,32 +552,11 @@ export default function Project() {
       toast.error("Project name is required");
       return;
     }
-    try {
-      setCreateProjectLoading(true);
-      const res = await createProjectApi({
-        name: projectDetails.name,
-        description: projectDetails.description,
-        tags: projectDetails.tags,
-      });
-      if (res) {
-        toast.success("Project created successfully");
-        setIsOpen(false);
-        setProjectDetails({
-          name: "",
-          description: "",
-          tags: [],
-        });
-        const updatedProjects = await getAllProjectsApi();
-        setProjects(
-          Array.isArray(updatedProjects) ? updatedProjects : [updatedProjects]
-        );
-      } else {
-        toast.error("Failed to create project");
-      }
-    } catch (error) {
-    } finally {
-      setCreateProjectLoading(false);
-    }
+    mutation.mutate({
+      name: projectDetails.name,
+      description: projectDetails.description,
+      tags: projectDetails.tags,
+    });
   };
 
   return (
@@ -573,14 +595,11 @@ export default function Project() {
             <button
               type="submit"
               disabled={
-                createProjectLoading ||
-                !projectDetails.name ||
-                !projectDetails.description ||
-                projectDetails.tags.length === 0
+                !projectDetails.name || projectDetails.tags.length === 0
               }
               className="px-4 py-2 h-10 disabled:bg-custom-black/50 disabled:cursor-not-allowed bg-custom-black text-white rounded hover:bg-custom-black/90 cursor-pointer transition-colors"
             >
-              {createProjectLoading ? (
+              {mutation.isPending ? (
                 <AiOutlineLoading3Quarters className=" animate-spin mx-auto" />
               ) : (
                 "Create Project"
@@ -602,11 +621,11 @@ export default function Project() {
             </button>
           </div>
         }
-        loading={loading}
+        loading={isLoading}
         data={[
           ["Project Name", "Project Id", "Created At", "Status", "Action"],
-          ...(projects
-            ? projects?.map((project, index) => [
+          ...(data
+            ? data?.map((project, index) => [
                 <div className="flex flex-col gap-y-4">
                   <div className="flex gap-x-2 items-center">
                     <FcFolder className="text-xl shrink-0" />
