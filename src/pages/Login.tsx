@@ -1,11 +1,18 @@
-import { NavLink, useNavigate } from "react-router-dom";
-import loginSvg from "../assets/login.svg";
+import { NavLink } from "react-router-dom";
+
 import { useState } from "react";
-const apiUrl = import.meta.env.VITE_APP_BACKEND_URL || "http://localhost:5000";
+import { AiOutlineLoading3Quarters } from "react-icons/ai";
+import { useAuth } from "../contexts/AuthContext";
+import { logInWithAuth } from "../services/api";
+import LoginWithGoogle from "../components/LoginWithGoogle";
+import GitHubLoginButton from "../components/GitHubLoginButton";
+
 export default function Login() {
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
-  const handleLogin = (e: React.FormEvent) => {
+
+  const { getUser } = useAuth();
+
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     const formData = new FormData(e.target as HTMLFormElement);
     const email = formData.get("email");
@@ -14,77 +21,83 @@ export default function Login() {
       console.error("Email and password are required");
       return;
     }
+    setLoading(true);
     try {
-      setLoading(true);
-      const myHeaders = new Headers();
-      myHeaders.append("Content-Type", "application/json");
-      const raw = JSON.stringify({ email, password });
-
-      const requestOptions: RequestInit = {
-        method: "POST",
-        headers: myHeaders,
-        body: raw,
-        redirect: "follow",
-      };
-
-      fetch(`${apiUrl}/api/admin/login`, requestOptions)
-        .then((response) => response.json())
-        .then((result) => {
-          setLoading(false);
-          localStorage.setItem("token", result.token);
-          navigate("/");
-        })
-        .catch((error) => console.error(error));
+      const data = await logInWithAuth({
+        provider: "local",
+        email: email.toString(),
+        password: password.toString(),
+      });
+      localStorage.setItem("token", data.token ?? "");
+      await getUser();
     } catch (error) {
-      console.error("An error occurred during login:", error);
+      localStorage.removeItem("token");
+      console.error("Login or user fetch failed:", error);
+    } finally {
+      setLoading(false);
     }
   };
+
   return (
-    <div className="h-screen flex">
-      <div className="xl:w-2/6 w-full justify-center flex flex-col h-full">
-        <div className="pl-4">
-          <h1 className="text-5xl font-bold">Login</h1>
-          <form onSubmit={handleLogin} className="mt-10">
-            <div className="mt-10">
-              <label className="text-lg font-semibold">Email</label>
-              <input
-                type="email"
-                name="email"
-                placeholder="Enter your email"
-                required
-                className="w-full mt-2 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            <div className="mt-6">
-              <label className="text-lg font-semibold">Password</label>
-              <input
-                type="password"
-                name="password"
-                placeholder="Enter your password"
-                required
-                className="w-full mt-2 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="mt-6 w-full disabled:bg-blue-100 disabled:text-black bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition duration-200"
-            >
-              Login
-            </button>
-          </form>
-          <div className="mt-6 text-center">
-            <p className="text-gray-600">
-              Don't have an account?{" "}
-              <NavLink to="/signup" className="text-blue-600 hover:underline">
-                Register
-              </NavLink>
-            </p>
+    <div className=" px-4 mx-auto w-full justify-center items-center h-full flex flex-col">
+      <div className="max-w-xl w-full mx-auto px-8 py-10 bg-white rounded-lg shadow-md">
+        <h1 className="text-5xl font-bold text-center">Welcome Back </h1>
+        <form onSubmit={handleLogin} className="mt-10">
+          <div className="mt-4">
+            <label className="text-lg font-semibold">Email</label>
+            <input
+              type="email"
+              name="email"
+              placeholder="Email"
+              required
+              className="w-full mt-1 px-4 py-1.5 border border-gray-300 rounded-lg focus:outline-none "
+            />
+          </div>
+          <div className="mt-4">
+            <label className="text-lg font-semibold">Password</label>
+            <input
+              type="password"
+              name="password"
+              placeholder="Enter your password"
+              required
+              className="w-full mt-1 px-4 py-1.5 border border-gray-300 rounded-lg focus:outline-none "
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="mt-6 w-full h-10 disabled:bg-rose-100 disabled:text-black bg-rose-600 text-white py-2 rounded-lg hover:bg-rose-700 transition duration-200"
+          >
+            {loading ? (
+              <AiOutlineLoading3Quarters className=" animate-spin mx-auto" />
+            ) : (
+              "Login"
+            )}
+          </button>
+        </form>
+        <div className="flex items-center justify-between my-4">
+          <hr className="w-full border-gray-300" />
+          <span className="px-2 text-gray-500">OR</span>
+          <hr className="w-full border-gray-300" />
+        </div>
+
+        <div className="flex items-center gap-x-4">
+          <div className="w-full">
+            <LoginWithGoogle text="signin_with" />
+          </div>
+          <div className="w-full">
+            <GitHubLoginButton text={"signin_with"} />
           </div>
         </div>
-      </div>
-      <div className="md:flex bg-[#faf4f0] m-10 rounded-2xl hidden w-full  items-center justify-center p-10">
-        <img src={loginSvg} className=" w-[70%] object-contain" alt="login" />
+        <div className="mt-6 text-center">
+          <p className="text-gray-600">
+            Don't have an account?{" "}
+            <NavLink to="/signup" className="text-blue-600 hover:underline">
+              Register
+            </NavLink>
+          </p>
+        </div>
       </div>
     </div>
   );
