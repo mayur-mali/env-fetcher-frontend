@@ -27,7 +27,7 @@ interface DrawerWrapperProps {
   snapPoints?: number[];
   activeSnapPoint?: number;
   setActiveSnapPoint?: (snapPoint: string | number | null) => void;
-  fadeFromIndex?: number;
+  fadeFromIndex?: number | undefined;
   snapToSequentialPoint?: boolean;
 
   // Options
@@ -79,24 +79,31 @@ export function DrawerWrapper({
     }
   };
 
+  // Prepare props for Drawer.Root, only including fadeFromIndex if it's allowed
+  const drawerRootProps: any = {
+    open,
+    defaultOpen,
+    onOpenChange,
+    modal,
+    container,
+    direction,
+    onAnimationEnd,
+    dismissible: dismissible && !disableEscClose,
+    handleOnly,
+    repositionInputs,
+    snapPoints,
+    activeSnapPoint,
+    setActiveSnapPoint,
+    snapToSequentialPoint,
+  };
+
+  // Only add fadeFromIndex if it's defined and snapPoints is provided (assuming that's the correct condition)
+  if (typeof fadeFromIndex === "number" && Array.isArray(snapPoints)) {
+    drawerRootProps.fadeFromIndex = fadeFromIndex;
+  }
+
   return (
-    <Drawer.Root
-      open={open}
-      defaultOpen={defaultOpen}
-      onOpenChange={onOpenChange}
-      modal={modal}
-      container={container}
-      direction={direction}
-      onAnimationEnd={onAnimationEnd}
-      dismissible={dismissible && !disableEscClose}
-      handleOnly={handleOnly}
-      repositionInputs={repositionInputs}
-      snapPoints={snapPoints}
-      activeSnapPoint={activeSnapPoint}
-      setActiveSnapPoint={setActiveSnapPoint}
-      {...(typeof fadeFromIndex === "number" ? { fadeFromIndex } : {})}
-      snapToSequentialPoint={snapToSequentialPoint}
-    >
+    <Drawer.Root {...drawerRootProps}>
       <Drawer.Trigger asChild>{trigger}</Drawer.Trigger>
 
       <Drawer.Portal>

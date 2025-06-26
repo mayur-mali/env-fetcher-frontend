@@ -17,7 +17,7 @@ interface DashboardState {
     totalProjects: number;
     totalDevelopers: number;
     totalGroups: number;
-    totalTokens: number;
+    activeTokens: number;
   };
   recentActivities: any[];
 }
@@ -72,7 +72,7 @@ export default function Dashboard() {
           label="Active Tokens
 "
           icon={<MdVpnLock className="text-3xl" />}
-          value={dashboardState.stats.totalTokens || 0}
+          value={dashboardState.stats.activeTokens || 0}
         />
       </div>
       <p className="text-2xl ml-4 text-gray-800">Quick Action</p>

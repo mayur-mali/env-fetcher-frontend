@@ -237,7 +237,7 @@ function Signup() {
           "A new OTP has been sent to your email. Please verify to complete registration."
         );
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("error while creating user", error.error);
     } finally {
       setLoading(false);

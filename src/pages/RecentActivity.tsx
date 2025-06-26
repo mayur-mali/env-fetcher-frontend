@@ -11,12 +11,13 @@ type ActivityType =
   | "group_created"
   | "group_deleted"
   | "env_uploaded"
-  | "env_deleted";
+  | "env_deleted"
+  | undefined;
 
 // Define the activity item interface
 interface ActivityItem {
   _id: string;
-  type?: ActivityType | string; // Allow string for flexibility
+  type?: ActivityType | string | undefined;
   user?: string;
   action?: string;
   subject?: string;
@@ -348,7 +349,7 @@ const ActivityItemComponent: React.FC<{ activity: ActivityItem }> = ({
 }) => {
   return (
     <div className="flex items-start space-x-3 py-3">
-      <ActivityIcon type={activity.type} />
+      <ActivityIcon type={activity.type as ActivityType} />
       <div className="flex-1 min-w-0">
         <div className="text-sm text-gray-900">
           <span className="font-medium">{activity.user}</span>
