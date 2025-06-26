@@ -32,7 +32,7 @@ export default function LoginWithGoogle({ text }: LoginWithGoogleProps) {
       });
       localStorage.setItem("token", res.token ?? "");
       await getUser();
-    } catch (err) {
+    } catch (err: any) {
       console.error("Google login failed", err.response?.data || err.message);
     }
   };

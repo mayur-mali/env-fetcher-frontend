@@ -4,12 +4,12 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { githubCallBackApi, logInWithAuth } from "../../services/api";
 import { useAuth } from "../../contexts/AuthContext";
-import Loading from "../../components/loading";
+import Loading from "../../components/Loading";
 
 const GithubCallback = () => {
   const navigate = useNavigate();
   const { getUser } = useAuth();
-  const [loading, setLoading] = useState(false);
+  const [loader, setLoader] = useState(false);
   useEffect(() => {
     const handleGithubRedirect = async () => {
       const urlParams = new URLSearchParams(window.location.search);
@@ -21,7 +21,7 @@ const GithubCallback = () => {
       }
 
       try {
-        setLoading(true);
+        setLoader(true);
         const tokenRes = await githubCallBackApi(code);
 
         const res = await logInWithAuth({
@@ -36,16 +36,16 @@ const GithubCallback = () => {
           window.location.href = "/";
         }
       } catch (err) {
-        setLoading(false);
+        setLoader(false);
         console.log("GitHub login error:", err);
       } finally {
-        setLoading(false);
+        setLoader(false);
       }
     };
 
     handleGithubRedirect();
   }, [navigate]);
-  if (loading) return <Loading />;
+  if (loader) return <Loading />;
   return <p>Logging in with GitHub...</p>;
 };
 
