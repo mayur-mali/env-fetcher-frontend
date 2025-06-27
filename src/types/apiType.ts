@@ -48,34 +48,53 @@ export interface CreateDeveloper {
   email: string;
   name: string;
   password: string;
+  _id?: string;
 }
 
-export interface GenerateProjectToken {
-  projectId: string;
-  envType: string | undefined;
-  token?: string | undefined;
-  description?: string;
-  createdBy?: string;
-  isActive?: boolean;
+export type Environment = "development" | "staging" | "production";
+
+interface CreatedBy {
+  _id: string;
+  firstName: string;
+  lastName: string;
+}
+interface Project {
+  id: string;
+  name?: string;
+}
+export interface Token {
   _id?: string;
+  name?: string;
+  token?: string;
+  createdBy?: CreatedBy;
+  projectId?: Project;
+  envType: Environment | string | undefined;
+  isActive?: boolean;
   createdAt?: string;
   updatedAt?: string;
-  __v?: number;
+  description?: string;
+}
+
+export interface Group {
+  id: string;
+  name: string;
+  admin: string;
+  description?: string;
+  developers: string[];
+  access: string[];
+  _id: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface CreateGroup {
   name: string;
   description?: string;
   message?: string;
-  group?: {
-    id: string;
-    name: string;
-    admin: string;
-    description?: string;
-    developers: string[];
-    access: string[];
-    _id: string;
-    createdAt: string;
-    updatedAt: string;
-  };
+  group?: Group;
+}
+
+export interface Access {
+  projectId: string;
+  envType: Environment | string | undefined;
 }

@@ -7,8 +7,10 @@ import {
   CreateProjectRequest,
   UploadEnvFile,
   CreateDeveloper,
-  GenerateProjectToken,
   CreateGroup,
+  Token,
+  Group,
+  Access,
 } from "../types/apiType";
 import { DashboardState } from "src/pages/Dashboard";
 
@@ -118,12 +120,27 @@ export const generateProjectToken = async ({
   projectId,
   envType,
   description,
-}: GenerateProjectToken): Promise<GenerateProjectToken> => {
-  const res = await axios.post<GenerateProjectToken>("api/token", {
+}: {
+  projectId: string | undefined | null;
+  envType: string | undefined | null;
+  description?: string;
+}): Promise<Token> => {
+  const res = await axios.post<Token>("api/token", {
     projectId,
     envType,
     description,
   });
+  return res.data;
+};
+
+export const getAllTokensApi = async (): Promise<Token[]> => {
+  const res = await axios.get<Token[]>("/api/token");
+  if (!res.data) throw new Error("No tokens found");
+  return res.data;
+};
+export const deactivateTokenApi = async (tokenId: string): Promise<string> => {
+  const res = await axios.put<string>(`/api/token/${tokenId}/deactivate`);
+  if (res.status !== 200) throw new Error("Failed to delete token");
   return res.data;
 };
 
@@ -168,8 +185,8 @@ export const createGroupApi = async ({
   return res.data;
 };
 
-export const getAllGroupsApi = async (): Promise<{ groups: any[] }> => {
-  const res = await axios.get<{ groups: any[] }>("/api/groups");
+export const getAllGroupsApi = async (): Promise<Group[]> => {
+  const res = await axios.get<Group[]>("/api/groups");
   if (!res.data) throw new Error("No groups found");
   return res.data;
 };
@@ -232,5 +249,37 @@ export const compareEvnVersionsApi = async ({
     result: { left: string; right: string; change: "added" | "removed" }[];
   }>(`/api/env/compare/${projectId}/${envType}/${version1}/${version2}`);
   if (!res.data) throw new Error("No changes found");
+  return res.data;
+};
+
+export const assignDevelopersToGroupApi = async ({
+  groupId,
+  developerIds,
+}: {
+  groupId: string;
+  developerIds: string[];
+}): Promise<{ message: string }> => {
+  const res = await axios.put<{ message: string }>(
+    `/api/groups/${groupId}/assign`,
+    { developerIds }
+  );
+
+  if (res.status !== 200) throw new Error("Failed to assign developers");
+  return res.data;
+};
+
+export const updateAccessOfGroup = async ({
+  groupId,
+  access,
+}: {
+  groupId: string;
+  access: Access[];
+}): Promise<{ message: string }> => {
+  const res = await axios.put<{ message: string }>(
+    `api/groups/${groupId}/access`,
+    { access }
+  );
+
+  if (res.status !== 200) throw new Error("Failed to update access");
   return res.data;
 };

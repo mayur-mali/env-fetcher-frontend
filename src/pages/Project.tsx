@@ -6,7 +6,7 @@ import {
   getAllProjectsApi,
   uploadEnvironmentFileApi,
 } from "../services/api";
-import { GenerateProjectToken, ProjectResponse } from "../types/apiType";
+import { ProjectResponse, Token } from "../types/apiType";
 import { Table } from "../components/Table";
 import { PiUploadDuotone } from "react-icons/pi";
 import Modal from "../components/Modal";
@@ -49,11 +49,11 @@ const randomColor = (randomNumber) => {
   return colorClasses[randomNumber];
 };
 
-const ProjectDetailsCard = ({ heading, subheading }) => {
+export const ProjectDetailsCard = ({ heading, subheading }) => {
   return (
     <div>
       <span className="text-sm text-gray-600">{heading}</span>
-      <p className="text-gray-800">{subheading}</p>
+      <div className="text-gray-800">{subheading}</div>
     </div>
   );
 };
@@ -157,13 +157,15 @@ const UpdateDrawer = ({ project }) => {
             )}
           </div>
         </div>
-        {project?.envFiles && project?.envFiles.length > 0 ? (
-          <EnvVersionsCompare environmentFiles={project?.envFiles} />
-        ) : null}
-        <h3 className="text-sm font-medium text-gray-900 my-3">Action</h3>
-        <div className="flex justify-between items-center gap-x-4">
-          <UploadEnvironmentFile projectId={project._id} />
-          <GenerateToken projectId={project._id} />
+        <div className="overflow-y-auto mt-4 max-h-[30rem] ">
+          {project?.envFiles && project?.envFiles.length > 0 ? (
+            <EnvVersionsCompare environmentFiles={project?.envFiles} />
+          ) : null}
+          <h3 className="text-sm font-medium text-gray-900 my-3">Action</h3>
+          <div className="flex justify-between items-center gap-x-4">
+            <UploadEnvironmentFile projectId={project._id} />
+            <GenerateToken projectId={project._id} />
+          </div>
         </div>
       </Modal>
     </>
@@ -265,7 +267,7 @@ const UploadEnvironmentFile = ({ projectId }: any) => {
   return (
     <div className="w-full">
       <Modal
-        hasChanged={false}
+        preventOutsideClose={true}
         title={"Upload Files"}
         open={isOpen}
         setOpen={setIsOpen}
@@ -406,10 +408,14 @@ const UploadEnvironmentFile = ({ projectId }: any) => {
   );
 };
 const GenerateToken = ({ projectId }: any) => {
-  let [isOpen, setIsOpen] = useState(false);
-
-  const [token, setToken] = useState<string>("");
   const queryClient = useQueryClient();
+  let [isOpen, setIsOpen] = useState(false);
+  const [token, setToken] = useState<string>("");
+  useEffect(() => {
+    if (isOpen === false) {
+      setToken("");
+    }
+  }, [isOpen]);
   const mutation = useMutation({
     mutationFn: generateProjectToken,
     onSuccess: (data) => {
@@ -426,8 +432,8 @@ const GenerateToken = ({ projectId }: any) => {
   return (
     <div className="w-full">
       <Modal
-        hasChanged={true}
-        title={"Upload Files"}
+        preventOutsideClose={true}
+        title={"Generate Token"}
         open={isOpen}
         setOpen={setIsOpen}
       >
@@ -463,7 +469,6 @@ const GenerateToken = ({ projectId }: any) => {
             <input
               type="text"
               name="description"
-              required
               placeholder="Enter token description (optional)"
               className="border border-gray-300 rounded p-2 focus:outline-none "
             />
