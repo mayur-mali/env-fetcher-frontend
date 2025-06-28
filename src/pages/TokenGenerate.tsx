@@ -63,6 +63,8 @@ const TokenGenerate: React.FC = () => {
     });
   };
 
+  const [toggeleState, setToggleState] = useState<boolean>(false);
+
   return (
     <div>
       <Modal title={"Generate Token"} open={isOpen} setOpen={setIsOpen}>

@@ -21,7 +21,7 @@ export interface ProjectResponse {
   admin: User;
   isDelete: boolean;
   tags: string[];
-  discription?: string;
+  description?: string;
   envFiles?: any[];
   recentActivities?: any[];
   createdAt: string;

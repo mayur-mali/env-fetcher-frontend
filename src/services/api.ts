@@ -76,6 +76,31 @@ export const createProjectApi = async ({
   return res.data;
 };
 
+export const updateProjectApi = async ({
+  projectId,
+  name,
+  description,
+  tags,
+  status,
+  isDeleted,
+}: {
+  projectId: string;
+  name?: string;
+  description?: string;
+  tags?: string[];
+  status?: string;
+  isDeleted?: boolean;
+}) => {
+  const res = await axios.put(`/api/project/${projectId}`, {
+    name,
+    description,
+    tags,
+    status,
+    isDeleted,
+  });
+  return res.data;
+};
+
 export const uploadEnvironmentFileApi = async ({
   projectId,
   envType,

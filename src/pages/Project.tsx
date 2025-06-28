@@ -4,6 +4,7 @@ import {
   createProjectApi,
   generateProjectToken,
   getAllProjectsApi,
+  updateProjectApi,
   uploadEnvironmentFileApi,
 } from "../services/api";
 import { ProjectResponse, Token } from "../types/apiType";
@@ -19,13 +20,15 @@ import {
 import { HiOutlineDotsVertical } from "react-icons/hi";
 import BorderProgressBox from "../components/BorderProgressBox";
 import { TbFileTypeTxt } from "react-icons/tb";
-import { MdDelete, MdModeEdit, MdOutlineDelete } from "react-icons/md";
+import { MdDelete, MdEdit, MdModeEdit, MdOutlineDelete } from "react-icons/md";
 import { CgCopy } from "react-icons/cg";
 import { FcFolder } from "react-icons/fc";
 import TagInput from "../components/TagInput";
 import { DrawerWrapper } from "../components/DrawerWrapper";
 import EnvVersionsCompare from "../components/project-ui/EnvVersionsCompare";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import ToggleButton from "@components/ToggleButton";
+import { FaCheck } from "react-icons/fa";
 
 const randomColor = (randomNumber) => {
   const colorClasses = [
@@ -49,16 +52,103 @@ const randomColor = (randomNumber) => {
   return colorClasses[randomNumber];
 };
 
-export const ProjectDetailsCard = ({ heading, subheading }) => {
+export const ProjectDetailsCard = ({
+  heading,
+  subheading,
+  isUpdate,
+  updateProject,
+  projectDetails,
+}: {
+  heading: string;
+  subheading?: any;
+  isUpdate?: boolean;
+  projectDetails?: { type: string; id: string };
+  updateProject?: {
+    mutate: (data: any) => void;
+    [key: string]: any;
+    id: string;
+  };
+}) => {
+  const [update, setUpdate] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [inputValue, setInputValue] = useState<any>(subheading);
+  useEffect(() => {
+    if (!update) {
+      setInputValue(subheading);
+    }
+  }, [subheading, update]);
+
+  const handleOutsideClick = (event: any) => {
+    if (inputRef.current && !inputRef.current.contains(event.target)) {
+      setUpdate(false);
+      setInputValue(subheading);
+    }
+  };
+
+  useEffect(() => {
+    document.addEventListener("mousedown", handleOutsideClick);
+    return () => {
+      document.removeEventListener("mousedown", handleOutsideClick);
+    };
+  }, []);
+
   return (
     <div>
-      <span className="text-sm text-gray-600">{heading}</span>
-      <div className="text-gray-800">{subheading}</div>
+      <div className="flex group justify-between items-center pr-4">
+        <span className="text-sm text-gray-600">{heading}</span>
+        {isUpdate && !update && (
+          <MdEdit
+            onClick={() => {
+              setUpdate(!update);
+            }}
+            className="hidden cursor-pointer group-hover:block text-gray-400"
+          />
+        )}
+      </div>
+      {!isUpdate ? (
+        <div className="text-gray-800">{subheading}</div>
+      ) : (
+        <div
+          ref={inputRef}
+          className={
+            "flex  justify-between items-center mr-4 " +
+            (update ? "border-b" : " border-none")
+          }
+        >
+          <input
+            type="text"
+            disabled={!update}
+            ref={inputRef}
+            onChange={(e) => {
+              setInputValue(e.target.value);
+            }}
+            className={
+              "text-gray-800 shrink-0" + (update ? "  focus:outline-none" : " ")
+            }
+            name={heading}
+            defaultValue={inputValue}
+          />
+          <FaCheck
+            onClick={() => {
+              updateProject &&
+                updateProject.mutate({
+                  projectId: projectDetails?.id || "",
+                  projectDetails: {
+                    [(projectDetails?.type || "") as string]: inputValue,
+                  },
+                });
+            }}
+            className={`${
+              update ? "text-green-500 z-50 cursor-pointer" : "hidden"
+            }`}
+          />
+        </div>
+      )}
     </div>
   );
 };
 
-const UpdateDrawer = ({ project }) => {
+const UpdateDrawer = ({ project, updateProject }) => {
   let [isOpen, setIsOpen] = useState(false);
   return (
     <>
@@ -85,6 +175,12 @@ const UpdateDrawer = ({ project }) => {
             <ProjectDetailsCard
               heading={"Project Name"}
               subheading={project.name}
+              projectDetails={{
+                type: "name",
+                id: project._id,
+              }}
+              isUpdate
+              updateProject={updateProject}
             />
             <ProjectDetailsCard
               heading={"Last Updated"}
@@ -399,7 +495,7 @@ const UploadEnvironmentFile = ({ projectId }: any) => {
 
       <button
         onClick={() => setIsOpen(true)}
-        className="flex cursor-pointer text-sm w-full items-center justify-between p-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors duration-150"
+        className="flex border h-10 border-gray-300 cursor-pointer text-sm w-full items-center justify-between p-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors duration-150"
       >
         Upload Environment File
         <PiUploadDuotone className="text-2xl cursor-pointer" />
@@ -509,7 +605,7 @@ const GenerateToken = ({ projectId }: any) => {
 
       <button
         onClick={() => setIsOpen(true)}
-        className="flex cursor-pointer text-sm w-full items-center justify-between p-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors duration-150"
+        className="flex cursor-pointer border h-10 border-gray-300 text-sm w-full items-center justify-between p-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors duration-150"
       >
         Generate Token
         <AiFillInteraction className="text-2xl cursor-pointer" />
@@ -547,6 +643,38 @@ export default function Project() {
     },
     onError: () => {
       toast.error("Failed to create project");
+    },
+  });
+
+  const updateProject = useMutation({
+    mutationFn: ({
+      projectId,
+      projectDetails,
+    }: {
+      projectId: string;
+      projectDetails: {
+        name?: string;
+        description?: string;
+        tags?: never[];
+        status?: string;
+        isDeleted?: boolean;
+      };
+    }) => {
+      return updateProjectApi({
+        projectId,
+        name: projectDetails.name,
+        description: projectDetails.description,
+        tags: projectDetails.tags,
+        status: projectDetails.status,
+        isDeleted: projectDetails.isDeleted,
+      });
+    },
+    onSuccess: () => {
+      toast.success("Project updated successfully");
+      queryClient.invalidateQueries({ queryKey: ["getAllProjects"] });
+    },
+    onError: () => {
+      toast.error("Failed to update project");
     },
   });
 
@@ -636,31 +764,6 @@ export default function Project() {
                     <FcFolder className="text-xl shrink-0" />
                     <p className="font-medium text-md ">{project.name} </p>
                   </div>
-
-                  {/* {project?.envFiles && project?.envFiles.length > 0 && (
-                    <span className="flex flex-wrap gap-2">
-                      {project.envFiles.map((envFile, idx) => (
-                        <span
-                          className={
-                            "px-3 font-bold  text-[9px] py-1 w-fit rounded-full " +
-                            (envFile.envType === "dev"
-                              ? "bg-green-200 text-green-800"
-                              : envFile.envType === "test"
-                              ? "bg-yellow-200 text-yellow-800"
-                              : "bg-red-200 text-red-800")
-                          }
-                          key={idx}
-                        >
-                          {envFile.envType === "dev"
-                            ? "🟢"
-                            : envFile.envType === "test"
-                            ? "🟡"
-                            : "🔴"}{" "}
-                          {envFile.envType}
-                        </span>
-                      ))}
-                    </span>
-                  )} */}
                 </div>,
 
                 <span className="text-md">{project._id}</span>,
@@ -672,6 +775,19 @@ export default function Project() {
                 </span>,
 
                 <div className="flex items-center space-x-2">
+                  <ToggleButton
+                    isOn={project.status === "active"}
+                    handleToggle={() => {
+                      updateProject.mutate({
+                        projectId: project._id,
+                        projectDetails: {
+                          status:
+                            project.status === "active" ? "inactive" : "active",
+                        },
+                      });
+                    }}
+                    className="ml-2"
+                  />
                   <span className="relative inline-flex h-2 w-2">
                     <span
                       className={`animate-ping absolute inline-flex h-full w-full rounded-full ${
@@ -695,7 +811,10 @@ export default function Project() {
                       : ""}
                   </span>
                 </div>,
-                <UpdateDrawer project={project} />,
+                <UpdateDrawer
+                  project={project}
+                  updateProject={updateProject}
+                />,
               ])
             : []),
         ]}

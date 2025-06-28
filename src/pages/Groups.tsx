@@ -107,6 +107,8 @@ const AssingDevelopersModal = ({ group }) => {
 const AssingAccessModal = ({ group }) => {
   const queryClient = useQueryClient();
   const [isOpen, setIsOpen] = useState(false);
+  const [projects, setProjects] = useState<any[]>([]);
+
   const { data, isLoading } = useQuery<ProjectResponse[] | null>({
     queryKey: ["getAllProjects"],
     queryFn: getAllProjectsApi,
@@ -126,26 +128,10 @@ const AssingAccessModal = ({ group }) => {
     },
   });
 
-  const [projects, setProjects] = useState<any[]>([
-    ...(data && !isLoading
-      ? data.map((d) => {
-          return {
-            _id: d._id,
-            name: d.name,
-            description: d.discription,
-            enyType: ["test", "dev", "prod"],
-            status: d.status,
-            isDeleted: d.isDelete,
-            checked: false,
-            selectedEnvTypes: [],
-          };
-        })
-      : []),
-  ]);
-
   const handleProjectsChange = (updatedProjects: Project[]) => {
     setProjects(updatedProjects);
   };
+
   return (
     <>
       <Modal
@@ -156,15 +142,34 @@ const AssingAccessModal = ({ group }) => {
       >
         <div className="flex flex-col justify-between gap-8">
           <ProjectList
-            initialProjects={projects}
+            initialProjects={[
+              ...(data && !isLoading
+                ? data.map((d) => {
+                    return {
+                      _id: d._id,
+                      name: d.name,
+                      description: d.description,
+                      envType: ["test", "dev", "prod"],
+                      status: d.status,
+                      isDeleted: d.isDelete,
+                      checked: false,
+                      selectedEnvTypes: [],
+                    };
+                  })
+                : []),
+            ]}
             title="Select Projects"
             onProjectsChange={handleProjectsChange}
           />
 
           <button
             type="submit"
-            //disabled={isLoading}
+            disabled={projects.length === 0}
             onClick={() => {
+              if (projects.length === 0) {
+                toast.error("Please select at least one project");
+                return;
+              }
               updateGroupAccess.mutate({
                 groupId: group._id,
                 access: projects
@@ -177,9 +182,9 @@ const AssingAccessModal = ({ group }) => {
                   .filter((d) => d.envType.length > 0),
               });
             }}
-            className="px-4 py-2 h-10  bg-custom-black text-white rounded hover:bg-custom-black/90 cursor-pointer transition-colors"
+            className="px-4 py-2 h-10 disabled:bg-gray-300 bg-custom-black text-white rounded hover:bg-custom-black/90 cursor-pointer transition-colors"
           >
-            Assign Developers
+            Update
           </button>
         </div>
       </Modal>
@@ -246,7 +251,7 @@ const GroupDrawer = ({ group }) => {
               subheading={group?.developers?.length || 0}
             />
             <ProjectDetailsCard
-              heading={"Group Access"}
+              heading={"Projects"}
               subheading={group?.access?.length ? group?.access.length : "None"}
             />
           </div>

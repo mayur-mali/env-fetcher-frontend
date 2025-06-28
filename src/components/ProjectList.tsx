@@ -3,12 +3,12 @@ import { ChevronDownIcon } from "@heroicons/react/20/solid";
 import React, { useState, useEffect, Fragment } from "react";
 
 export interface Project {
-  _id: string;
+  _id?: string;
   name: string;
-  description: string;
-  enyType: string[];
-  status: string;
-  isDeleted: boolean;
+  description?: string;
+  envType?: string[];
+  status?: string;
+  isDeleted?: boolean;
   checked?: boolean;
   selectedEnvTypes?: string[];
 }
@@ -40,7 +40,10 @@ const ProjectList: React.FC<ProjectListProps> = ({
   }, [projects, onProjectsChange]);
 
   // Handle project checkbox click - fixed to prevent continuous selection
-  const handleProjectCheck = (projectId: string, event: React.MouseEvent) => {
+  const handleProjectCheck = (
+    projectId: string | undefined,
+    event: React.MouseEvent
+  ) => {
     // Stop event propagation to prevent bubbling
     event.stopPropagation();
 
@@ -51,7 +54,9 @@ const ProjectList: React.FC<ProjectListProps> = ({
           return {
             ...project,
             checked: newCheckedState,
-            selectedEnvTypes: newCheckedState ? [...project.enyType] : [],
+            selectedEnvTypes: newCheckedState
+              ? [...(project.envType || [])]
+              : [],
           };
         }
         return project;
@@ -135,11 +140,23 @@ const ProjectList: React.FC<ProjectListProps> = ({
                     {/* Project checkbox - using onClick instead of onChange */}
                     <div
                       className={`w-6 h-6 flex items-center justify-center ${
+                        project.status === "inactive" || project.isDeleted
+                          ? "opacity-50 hover:cursor-not-allowed"
+                          : ""
+                      } ${
                         project.checked
                           ? "bg-blue-600"
                           : "border border-gray-300 bg-white"
                       } rounded cursor-pointer`}
-                      onClick={(e) => handleProjectCheck(project._id, e)}
+                      onClick={(e) => {
+                        if (
+                          project.status === "inactive" ||
+                          project.isDeleted
+                        ) {
+                          return;
+                        }
+                        handleProjectCheck(project._id, e);
+                      }}
                     >
                       {project.checked && (
                         <svg
@@ -153,8 +170,11 @@ const ProjectList: React.FC<ProjectListProps> = ({
                       {/* Hidden input for accessibility */}
                       <input
                         type="checkbox"
-                        className="opacity-0 absolute w-0 h-0"
+                        className="opacity-0 absolute w-0 h-0 disabled:cursor-not-allowed"
                         checked={project.checked || false}
+                        disabled={
+                          project.status === "inactive" || project.isDeleted
+                        }
                         readOnly
                       />
                     </div>
@@ -167,7 +187,7 @@ const ProjectList: React.FC<ProjectListProps> = ({
                   </div>
 
                   <div className="ml-9 space-y-1">
-                    {project.enyType.map((envType) => (
+                    {project.envType?.map((envType) => (
                       <div
                         key={`${project._id}-${envType}`}
                         className="flex items-center"
@@ -175,13 +195,23 @@ const ProjectList: React.FC<ProjectListProps> = ({
                         {/* Environment type checkbox - using onClick instead of onChange */}
                         <div
                           className={`w-5 h-5 flex items-center justify-center ${
+                            project.status === "inactive" || project.isDeleted
+                              ? "opacity-50 hover:cursor-not-allowed"
+                              : ""
+                          } ${
                             isEnvTypeChecked(project, envType)
                               ? "bg-blue-600"
                               : "border border-gray-300 bg-white"
                           } rounded cursor-pointer`}
-                          onClick={(e) =>
-                            handleEnvTypeCheck(project._id, envType, e)
-                          }
+                          onClick={(e) => {
+                            if (
+                              project._id &&
+                              project.status !== "inactive" &&
+                              !project.isDeleted
+                            ) {
+                              handleEnvTypeCheck(project._id, envType, e);
+                            }
+                          }}
                         >
                           {isEnvTypeChecked(project, envType) && (
                             <svg
@@ -195,8 +225,11 @@ const ProjectList: React.FC<ProjectListProps> = ({
                           {/* Hidden input for accessibility */}
                           <input
                             type="checkbox"
-                            className="opacity-0 absolute w-0 h-0"
+                            className="opacity-0 disabled:cursor-not-allowed absolute w-0 h-0"
                             checked={isEnvTypeChecked(project, envType)}
+                            disabled={
+                              project.status === "inactive" || project.isDeleted
+                            }
                             readOnly
                           />
                         </div>

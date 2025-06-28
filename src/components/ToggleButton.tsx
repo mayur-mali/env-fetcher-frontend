@@ -15,14 +15,14 @@ const ToggleButton: React.FC<ToggleButtonProps> = ({
     <button
       onClick={handleToggle}
       disabled={isDiseble}
-      className={`relative w-14 disabled:cursor-not-allowed h-8 flex items-center rounded-full p-1 cursor-pointer transition-colors duration-300 ease-in-out ${
+      className={`relative w-10 disabled:cursor-not-allowed h-2 flex items-center rounded-full cursor-pointer transition-colors duration-300 ease-in-out ${
         isOn ? "bg-blue-500" : "bg-gray-300"
       } ${className}`}
       aria-pressed={isOn}
     >
       <span
-        className={`absolute left-1 w-6 h-6 bg-white rounded-full shadow-md transform transition-transform duration-300 ease-in-out ${
-          isOn ? "translate-x-6" : "translate-x-0"
+        className={`absolute w-5 h-5 bg-white rounded-full border border-gray-200 shadow-md transform transition-transform duration-300 ease-in-out ${
+          isOn ? "translate-x-5" : "translate-x-0"
         }`}
       />
     </button>
