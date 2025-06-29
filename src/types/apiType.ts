@@ -49,6 +49,9 @@ export interface CreateDeveloper {
   name: string;
   password: string;
   _id?: string;
+  isActive?: boolean;
+  createdAt?: string | Date;
+  updatedAt?: string | Date;
 }
 
 export type Environment = "development" | "staging" | "production";

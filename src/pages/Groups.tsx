@@ -22,6 +22,9 @@ import MultiSelectDropdown from "@components/MultiSelectDropdown";
 
 import { ProjectResponse } from "src/types/apiType";
 import ProjectList, { Project } from "@components/ProjectList";
+import ConfirmationDialog from "@components/ConfirmationDialog";
+import { BsExclamationTriangle } from "react-icons/bs";
+import { RiDeleteBin6Line } from "react-icons/ri";
 
 const AssingDevelopersModal = ({ group }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -266,9 +269,46 @@ const GroupDrawer = ({ group }) => {
   );
 };
 
+const DeleteGroup: React.FC = ({}) => {
+  const [isDeleteOpen, setIsDeleteOpen] = React.useState(false);
+  const queryClient = useQueryClient();
+  // const deleteDeveloper = useMutation({
+  //   mutationFn: deleteDeveloperApi,
+  //   onSuccess: () => {
+  //     toast.success("Developer deleted successfully");
+  //     setIsDeleteOpen(false);
+  //     queryClient.invalidateQueries({ queryKey: ["getAllDevelopers"] });
+  //   },
+  //   onError: () => {
+  //     toast.error("Failed to delete developer");
+  //   },
+  // });
+  return (
+    <div>
+      <RiDeleteBin6Line
+        onClick={() => {
+          setIsDeleteOpen(true);
+        }}
+        className="text-2xl text-red-400 cursor-pointer"
+      />
+      <Modal open={isDeleteOpen} className="max-w-md" setOpen={setIsDeleteOpen}>
+        <ConfirmationDialog
+          isOpen={isDeleteOpen}
+          onClose={() => setIsDeleteOpen(false)}
+          onConfirm={() => {}}
+          title="Delete Developer"
+          description="Are you sure you want to delete this developer? This action cannot be undone."
+          IconComponent={BsExclamationTriangle}
+          confirmText="Yes, Delete"
+          cancelText="No, Keep It"
+        />
+      </Modal>
+    </div>
+  );
+};
+
 export default function Groups() {
   const queryClient = useQueryClient();
-  const [loading, setLoading] = React.useState<boolean>(false);
 
   const [isOpen, setIsOpen] = React.useState<boolean>(false);
 
@@ -278,98 +318,87 @@ export default function Groups() {
     staleTime: 1000 * 60 * 1, // 1 minute
   });
 
-  // useEffect(() => {
-  //   const fetchAllGroups = async () => {
-  //     try {
-  //       setLoading(true);
-  //       const data = await getAllGroupsApi();
-  //       setGroups(data);
-  //     } catch (error) {
-  //       console.error("Failed to fetch groups:", error);
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   };
-  //   fetchAllGroups();
-  // }, []);
+  const createGroup = useMutation({
+    mutationFn: createGroupApi,
+    onSuccess: (data) => {
+      toast.success("Group created successfully");
+      queryClient.invalidateQueries({ queryKey: ["groups"] });
+      setIsOpen(false);
+    },
+    onError: (error) => {
+      toast.error("Failed to create group");
+      console.error("Error creating group:", error);
+    },
+  });
 
-  // const createGroup = async (e) => {
-  //   e.preventDefault();
-  //   const formData = new FormData(e.target);
-  //   const data = Object.fromEntries(formData.entries());
-  //   try {
-  //     setLoading(true);
-  //     const res = await createGroupApi({
-  //       name: data.name.toString(),
-  //       description: data.description.toString(),
-  //     });
-
-  //     if (res) {
-  //       setIsOpen(false);
-  //       toast.success("Group created successfully");
-  //       const data = await getAllGroupsApi();
-  //       setGroups(data);
-  //     }
-  //   } catch (error) {
-  //     toast.error("Failed to create group");
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
-
-  // const deleteGroup = async (groupId) => {
-  //   try {
-  //     setLoading(true);
-  //     await deleteGroupApi(groupId);
-  //     toast.success("Group deleted successfully");
-  //     const data = await getAllGroupsApi();
-  //     setGroups(data);
-  //   } catch (error) {
-  //     toast.error("Failed to delete group");
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
+  const handleCreateGroup = (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const data = Object.fromEntries(formData.entries());
+    createGroup.mutate({
+      name: data.name.toString(),
+      description: data.description.toString(),
+    });
+  };
 
   return (
     <div>
-      <Modal title={"Create Group"} open={isOpen} setOpen={setIsOpen}>
-        <form>
-          <div className="flex flex-col gap-4">
-            <label className="text-sm font-semibold">Group Name</label>
-            <input
-              type="text"
-              name="name"
-              placeholder="Enter Name"
-              required
-              className="border border-gray-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <label className="text-sm font-semibold">Description </label>
-            <input
-              type="text"
-              name="description"
-              placeholder="Enter Description"
-              required
-              className="border border-gray-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
+      <Modal
+        open={isOpen}
+        setOpen={setIsOpen}
+        type="drawer"
+        position="bottom"
+        customDimensions={{
+          width: "w-full",
+          height: "h-[50vh]",
+        }}
+      >
+        <div className="max-w-md mx-auto h-full ">
+          <h2 className="font-medium text-2xl text-gray-900 mt-2">
+            Create New Group
+          </h2>
+          <p className="leading-6 mt-2 text-gray-600">
+            Create a new group to manage developers and projects efficiently.
+            Fill in the details below to get started.
+          </p>
+          <form onSubmit={handleCreateGroup}>
+            <div className="flex flex-col">
+              <label className="font-medium text-gray-900 text-sm mt-4 mb-2 block">
+                Group Name
+              </label>
+              <input
+                type="text"
+                name="name"
+                required
+                className="border border-gray-200 bg-white w-full px-3 h-9 rounded-lg outline-none focus:ring-2 focus:ring-black/5 text-gray-900"
+              />
+              <label className="font-medium text-gray-900 text-sm mt-4 mb-2 block">
+                Description
+              </label>
+              <textarea
+                rows={4}
+                name="description"
+                required
+                className="border border-gray-200 bg-white w-full resize-none rounded-lg p-3 pt-2.5 text-gray-900 outline-none focus:ring-2 focus:ring-black/5 focus:ring-offset-0"
+              />
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="px-4 py-2 h-10 disabled:bg-custom-black/50 bg-custom-black text-white rounded hover:bg-custom-black/90 cursor-pointer transition-colors"
-            >
-              {loading ? (
-                <AiOutlineLoading3Quarters className=" animate-spin mx-auto" />
-              ) : (
-                "Create Group"
-              )}
-            </button>
-          </div>
-        </form>
+              <button
+                type="submit"
+                disabled={createGroup.isPending}
+                className="h-[44px] mt-4 bg-black text-gray-50 rounded-lg disabled:cursor-not-allowed cursor-pointer disabled:bg-black/50 w-full font-medium"
+              >
+                {createGroup.isPending ? (
+                  <AiOutlineLoading3Quarters className=" animate-spin mx-auto" />
+                ) : (
+                  "Create Group"
+                )}
+              </button>
+            </div>
+          </form>
+        </div>
       </Modal>
 
       <Table
-        pagination={true}
         minHeight={" h-auto"}
         searchBox={
           <div className="flex justify-between items-center w-full ">
@@ -384,12 +413,15 @@ export default function Groups() {
         }
         loading={isLoading}
         data={[
-          ["Group Name", "Description", "Action"],
+          ["Group Name", "Description", "Actions"],
           ...(groups
             ? groups?.map((group) => [
                 group.name,
                 group.description,
-                <GroupDrawer group={group} />,
+                <div className="flex items-center gap-x-4">
+                  <GroupDrawer group={group} />
+                  <DeleteGroup />
+                </div>,
               ])
             : []),
         ]}

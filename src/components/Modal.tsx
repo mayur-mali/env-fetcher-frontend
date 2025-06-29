@@ -157,16 +157,14 @@ export default function Modal({
 
   const getPanelStyles = () => {
     if (type === "modal") {
-      return `relative transform w-full rounded-lg bg-[#F8FAFB] text-left shadow-xl transition-all sm:my-8 ${getDimensionClasses()} ${className}`;
+      return `relative transform w-full bg-white rounded-xl shadow-lg text-left shadow-xl transition-all sm:my-8 ${getDimensionClasses()} ${className}`;
     }
 
     return `${getDrawerPositionClasses()} ${getDimensionClasses()} bg-[#F8FAFB] shadow-xl ${className} ${
       position === "left" ? "rounded-r-lg" : ""
     } ${position === "right" ? "rounded-l-lg" : ""} ${
       position === "top" ? "rounded-b-lg" : ""
-    }  ${
-      position === "bottomMiddel" ? "rounded-t-lg" : ""
-    } transform transition-all`;
+    }  ${position === "bottom" ? "rounded-t-lg" : ""} transform transition-all`;
   };
 
   const handleClose = () => {

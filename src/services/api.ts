@@ -140,6 +140,35 @@ export const getAllDevelopersApi = async (): Promise<CreateDeveloper[]> => {
   const res = await axios.get<CreateDeveloper[]>("/api/developer");
   return res.data;
 };
+export const updateDeveloperApi = async ({
+  developerId,
+
+  name,
+  isActive,
+}: {
+  developerId: string;
+
+  name?: string;
+  isActive?: boolean;
+}): Promise<CreateDeveloper> => {
+  const res = await axios.put<CreateDeveloper>(
+    `/api/developer/${developerId}`,
+    {
+      name,
+      isActive,
+    }
+  );
+
+  if (!res.data) throw new Error("No developer updated");
+  return res.data;
+};
+export const deleteDeveloperApi = async (
+  developerId: string
+): Promise<string> => {
+  const res = await axios.delete<string>(`/api/developer/${developerId}`);
+  if (res.status !== 200) throw new Error("Failed to delete developer");
+  return res.data;
+};
 
 export const generateProjectToken = async ({
   projectId,

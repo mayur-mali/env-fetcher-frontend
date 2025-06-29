@@ -694,52 +694,79 @@ export default function Project() {
 
   return (
     <div className="p-4">
-      <Modal title={"Create Project"} open={isOpen} setOpen={setIsOpen}>
-        <form onSubmit={createNewProject}>
-          <div className="flex flex-col gap-4">
-            <label className="text-sm font-semibold">Project Name</label>
-            <input
-              type="text"
-              placeholder="Enter project name"
-              required
-              value={projectDetails.name}
-              onChange={(e) =>
-                setProjectDetails({ ...projectDetails, name: e.target.value })
-              }
-              className="border border-gray-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <label className="text-sm font-semibold">Description</label>
-            <input
-              type="text"
-              placeholder="Enter project description"
-              name="description"
-              required
-              value={projectDetails.description}
-              onChange={(e) =>
-                setProjectDetails({
-                  ...projectDetails,
-                  description: e.target.value,
-                })
-              }
-              className="border border-gray-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <label className="text-sm font-semibold">Tags</label>
-            <TagInput tags={projectDetails} setTags={setProjectDetails} />
-            <button
-              type="submit"
-              disabled={
-                !projectDetails.name || projectDetails.tags.length === 0
-              }
-              className="px-4 py-2 h-10 disabled:bg-custom-black/50 disabled:cursor-not-allowed bg-custom-black text-white rounded hover:bg-custom-black/90 cursor-pointer transition-colors"
-            >
-              {mutation.isPending ? (
-                <AiOutlineLoading3Quarters className=" animate-spin mx-auto" />
-              ) : (
-                "Create Project"
-              )}
-            </button>
-          </div>
-        </form>
+      <Modal
+        open={isOpen}
+        setOpen={setIsOpen}
+        type="drawer"
+        position="bottom"
+        customDimensions={{
+          width: "w-full",
+          height: "h-[60vh]",
+        }}
+      >
+        <div className="max-w-md mx-auto">
+          <h2 className="font-medium text-2xl text-gray-900 mt-2">
+            New Project
+          </h2>
+          <p className="leading-6 mt-2 text-gray-600">
+            Get started by filling in the information below to create your new
+            project.
+          </p>
+          <form onSubmit={createNewProject}>
+            <div className="flex flex-col">
+              <label className="font-medium text-gray-900 text-sm mt-4 mb-2 block">
+                Project Name
+              </label>
+              <input
+                type="text"
+                required
+                value={projectDetails.name}
+                onChange={(e) =>
+                  setProjectDetails({ ...projectDetails, name: e.target.value })
+                }
+                className="border border-gray-200 bg-white w-full px-3 h-9 rounded-lg outline-none focus:ring-2 focus:ring-black/5 text-gray-900"
+              />
+              <label className="font-medium text-gray-900 text-sm mt-4 mb-2 block">
+                Tags
+              </label>
+              <TagInput
+                tags={projectDetails}
+                placeholder=""
+                setTags={setProjectDetails}
+              />
+
+              <label className="font-medium text-gray-900 text-sm mt-4 mb-2 block">
+                Description
+              </label>
+              <textarea
+                rows={4}
+                required
+                value={projectDetails.description}
+                onChange={(e) =>
+                  setProjectDetails({
+                    ...projectDetails,
+                    description: e.target.value,
+                  })
+                }
+                className="border border-gray-200 bg-white w-full resize-none rounded-lg p-3 pt-2.5 text-gray-900 outline-none focus:ring-2 focus:ring-black/5 focus:ring-offset-0"
+              />
+
+              <button
+                type="submit"
+                disabled={
+                  !projectDetails.name || projectDetails.tags.length === 0
+                }
+                className="px-4 py-2 mt-8 h-10 disabled:bg-custom-black/50 disabled:cursor-not-allowed bg-custom-black text-white rounded hover:bg-custom-black/90 cursor-pointer transition-colors"
+              >
+                {mutation.isPending ? (
+                  <AiOutlineLoading3Quarters className=" animate-spin mx-auto" />
+                ) : (
+                  "Create Project"
+                )}
+              </button>
+            </div>
+          </form>
+        </div>
       </Modal>
       <Table
         pagination={true}
