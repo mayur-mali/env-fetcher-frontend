@@ -5,6 +5,16 @@ body {
   font-family: "Share Tech", sans-serif;
 }
 
+body {
+  font-family: "Inter", sans-serif;
+}
+
+code,
+pre,
+.cli-output {
+  font-family: "JetBrains Mono", monospace;
+}
+
 .action-btn {
   background: linear-gradient(135deg, #3b82f6, #1d4ed8);
   color: white;

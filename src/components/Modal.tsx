@@ -1,4 +1,4 @@
-import React, { Fragment, useRef } from "react";
+import React, { Fragment } from "react";
 import {
   Dialog,
   DialogPanel,
@@ -7,7 +7,7 @@ import {
   TransitionChild,
 } from "@headlessui/react";
 
-type Position = "right" | "left" | "top" | "bottom";
+type Position = "right" | "left" | "top" | "bottom" | "bottomMiddel";
 type Type = "modal" | "drawer";
 type Size = "sm" | "md" | "lg" | "xl" | "full" | "auto";
 
@@ -22,7 +22,7 @@ interface ModalProps {
   open: boolean;
   setOpen: (open: boolean) => void;
   className?: string;
-  hasChanged?: boolean;
+  preventOutsideClose?: boolean;
   type?: Type;
   position?: Position;
   size?: Size;
@@ -64,14 +64,12 @@ export default function Modal({
   open,
   setOpen,
   className = "",
-  hasChanged,
+  preventOutsideClose = false,
   type = "modal",
   position = "right",
   size = "md",
   customDimensions,
 }: ModalProps) {
-  const cancelButtonRef = useRef(null);
-
   const getTransitionStyles = () => {
     if (type === "modal") {
       return {
@@ -117,6 +115,14 @@ export default function Modal({
         leaveFrom: "translate-y-0",
         leaveTo: "translate-y-full",
       },
+      bottomMiddel: {
+        enter: "transform transition ease-in-out duration-300",
+        enterFrom: "translate-y-full",
+        enterTo: "translate-y-0",
+        leave: "transform transition ease-in-out duration-300",
+        leaveFrom: "translate-y-0",
+        leaveTo: "translate-y-full",
+      },
     };
 
     return transitions[position];
@@ -128,6 +134,7 @@ export default function Modal({
       left: "fixed left-0 inset-y-0",
       top: "fixed top-0 inset-x-0",
       bottom: "fixed bottom-0 inset-x-0",
+      bottomMiddel: "fixed bottom-0 mx-auto inset-x-0",
     };
 
     return positions[position];
@@ -150,30 +157,37 @@ export default function Modal({
 
   const getPanelStyles = () => {
     if (type === "modal") {
-      return `relative transform w-full rounded-lg bg-[#F8FAFB] text-left shadow-xl transition-all sm:my-8 ${getDimensionClasses()} ${className}`;
+      return `relative transform w-full bg-white rounded-xl shadow-lg text-left shadow-xl transition-all sm:my-8 ${getDimensionClasses()} ${className}`;
     }
 
     return `${getDrawerPositionClasses()} ${getDimensionClasses()} bg-[#F8FAFB] shadow-xl ${className} ${
       position === "left" ? "rounded-r-lg" : ""
     } ${position === "right" ? "rounded-l-lg" : ""} ${
       position === "top" ? "rounded-b-lg" : ""
-    } ${position === "bottom" ? "rounded-t-lg" : ""} transform transition-all`;
+    }  ${position === "bottom" ? "rounded-t-lg" : ""} transform transition-all`;
+  };
+
+  const handleClose = () => {
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
+
+    if (!preventOutsideClose) {
+      setOpen(false);
+    }
+  };
+
+  const handleCrossClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
+    setOpen(false);
   };
 
   return (
     <Transition show={open} as={Fragment}>
-      <Dialog
-        as="div"
-        className="relative z-50"
-        initialFocus={cancelButtonRef}
-        onClose={() => {
-          if (hasChanged === true) {
-            setOpen(true);
-          } else {
-            setOpen(false);
-          }
-        }}
-      >
+      <Dialog as="div" className="relative z-50" onClose={handleClose}>
         <TransitionChild
           as={Fragment}
           enter="ease-out duration-300"
@@ -199,7 +213,7 @@ export default function Modal({
                     <div className="mt-3 w-full relative">
                       <span
                         className="cursor-pointer absolute right-0 -top-5 font-extrabold hover:text-gray-700"
-                        onClick={() => setOpen(false)}
+                        onClick={handleCrossClick}
                       >
                         X
                       </span>

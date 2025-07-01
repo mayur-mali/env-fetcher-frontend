@@ -4,9 +4,10 @@ import {
   createProjectApi,
   generateProjectToken,
   getAllProjectsApi,
+  updateProjectApi,
   uploadEnvironmentFileApi,
 } from "../services/api";
-import { GenerateProjectToken, ProjectResponse } from "../types/apiType";
+import { ProjectResponse, Token } from "../types/apiType";
 import { Table } from "../components/Table";
 import { PiUploadDuotone } from "react-icons/pi";
 import Modal from "../components/Modal";
@@ -19,12 +20,15 @@ import {
 import { HiOutlineDotsVertical } from "react-icons/hi";
 import BorderProgressBox from "../components/BorderProgressBox";
 import { TbFileTypeTxt } from "react-icons/tb";
-import { MdDelete, MdModeEdit, MdOutlineDelete } from "react-icons/md";
+import { MdDelete, MdEdit, MdModeEdit, MdOutlineDelete } from "react-icons/md";
 import { CgCopy } from "react-icons/cg";
 import { FcFolder } from "react-icons/fc";
 import TagInput from "../components/TagInput";
 import { DrawerWrapper } from "../components/DrawerWrapper";
 import EnvVersionsCompare from "../components/project-ui/EnvVersionsCompare";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import ToggleButton from "@components/ToggleButton";
+import { FaCheck } from "react-icons/fa";
 
 const randomColor = (randomNumber) => {
   const colorClasses = [
@@ -48,16 +52,103 @@ const randomColor = (randomNumber) => {
   return colorClasses[randomNumber];
 };
 
-const ProjectDetailsCard = ({ heading, subheading }) => {
+export const ProjectDetailsCard = ({
+  heading,
+  subheading,
+  isUpdate,
+  updateProject,
+  projectDetails,
+}: {
+  heading: string;
+  subheading?: any;
+  isUpdate?: boolean;
+  projectDetails?: { type: string; id: string };
+  updateProject?: {
+    mutate: (data: any) => void;
+    [key: string]: any;
+    id: string;
+  };
+}) => {
+  const [update, setUpdate] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [inputValue, setInputValue] = useState<any>(subheading);
+  useEffect(() => {
+    if (!update) {
+      setInputValue(subheading);
+    }
+  }, [subheading, update]);
+
+  const handleOutsideClick = (event: any) => {
+    if (inputRef.current && !inputRef.current.contains(event.target)) {
+      setUpdate(false);
+      setInputValue(subheading);
+    }
+  };
+
+  useEffect(() => {
+    document.addEventListener("mousedown", handleOutsideClick);
+    return () => {
+      document.removeEventListener("mousedown", handleOutsideClick);
+    };
+  }, []);
+
   return (
     <div>
-      <span className="text-sm text-gray-600">{heading}</span>
-      <p className="text-gray-800">{subheading}</p>
+      <div className="flex group justify-between items-center pr-4">
+        <span className="text-sm text-gray-600">{heading}</span>
+        {isUpdate && !update && (
+          <MdEdit
+            onClick={() => {
+              setUpdate(!update);
+            }}
+            className="hidden cursor-pointer group-hover:block text-gray-400"
+          />
+        )}
+      </div>
+      {!isUpdate ? (
+        <div className="text-gray-800">{subheading}</div>
+      ) : (
+        <div
+          ref={inputRef}
+          className={
+            "flex  justify-between items-center mr-4 " +
+            (update ? "border-b" : " border-none")
+          }
+        >
+          <input
+            type="text"
+            disabled={!update}
+            ref={inputRef}
+            onChange={(e) => {
+              setInputValue(e.target.value);
+            }}
+            className={
+              "text-gray-800 shrink-0" + (update ? "  focus:outline-none" : " ")
+            }
+            name={heading}
+            defaultValue={inputValue}
+          />
+          <FaCheck
+            onClick={() => {
+              updateProject &&
+                updateProject.mutate({
+                  projectId: projectDetails?.id || "",
+                  projectDetails: {
+                    [(projectDetails?.type || "") as string]: inputValue,
+                  },
+                });
+            }}
+            className={`${
+              update ? "text-green-500 z-50 cursor-pointer" : "hidden"
+            }`}
+          />
+        </div>
+      )}
     </div>
   );
 };
 
-const UpdateDrawer = ({ project }) => {
+const UpdateDrawer = ({ project, updateProject }) => {
   let [isOpen, setIsOpen] = useState(false);
   return (
     <>
@@ -84,6 +175,12 @@ const UpdateDrawer = ({ project }) => {
             <ProjectDetailsCard
               heading={"Project Name"}
               subheading={project.name}
+              projectDetails={{
+                type: "name",
+                id: project._id,
+              }}
+              isUpdate
+              updateProject={updateProject}
             />
             <ProjectDetailsCard
               heading={"Last Updated"}
@@ -156,11 +253,15 @@ const UpdateDrawer = ({ project }) => {
             )}
           </div>
         </div>
-        <EnvVersionsCompare environmentFiles={project?.envFiles} />
-        <h3 className="text-sm font-medium text-gray-900 my-3">Action</h3>
-        <div className="flex justify-between items-center gap-x-4">
-          <UploadEnvironmentFile projectId={project._id} />
-          <GenerateToken projectId={project._id} />
+        <div className="overflow-y-auto mt-4 max-h-[30rem] ">
+          {project?.envFiles && project?.envFiles.length > 0 ? (
+            <EnvVersionsCompare environmentFiles={project?.envFiles} />
+          ) : null}
+          <h3 className="text-sm font-medium text-gray-900 my-3">Action</h3>
+          <div className="flex justify-between items-center gap-x-4">
+            <UploadEnvironmentFile projectId={project._id} />
+            <GenerateToken projectId={project._id} />
+          </div>
         </div>
       </Modal>
     </>
@@ -168,6 +269,7 @@ const UpdateDrawer = ({ project }) => {
 };
 
 const UploadEnvironmentFile = ({ projectId }: any) => {
+  const queryClient = useQueryClient();
   let [isOpen, setIsOpen] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -239,10 +341,29 @@ const UploadEnvironmentFile = ({ projectId }: any) => {
     }, intervalTime);
   };
 
+  const mutation = useMutation({
+    mutationFn: uploadEnvironmentFileApi,
+    onSuccess: (data) => {
+      toast.success(data.message);
+      setSelectedFile(null);
+      setUploadProgress(0);
+      setUploading(false);
+      setIsOpen(false);
+      if (inputRef.current) {
+        inputRef.current.value = "";
+      }
+
+      queryClient.invalidateQueries({ queryKey: ["getAllProjects"] });
+    },
+    onError: () => {
+      toast.error("Failed to create project");
+    },
+  });
+
   return (
     <div className="w-full">
       <Modal
-        hasChanged={false}
+        preventOutsideClose={true}
         title={"Upload Files"}
         open={isOpen}
         setOpen={setIsOpen}
@@ -252,14 +373,11 @@ const UploadEnvironmentFile = ({ projectId }: any) => {
             e.preventDefault();
             const formData = new FormData(e.target as HTMLFormElement);
             const envType = formData.get("envType");
-
-            const res = await uploadEnvironmentFileApi({
+            mutation.mutate({
               projectId,
               envType: envType as string,
               envFile: selectedFile as Blob,
             });
-
-            console.log(res);
           }}
         >
           <div className="flex flex-col gap-4">
@@ -377,7 +495,7 @@ const UploadEnvironmentFile = ({ projectId }: any) => {
 
       <button
         onClick={() => setIsOpen(true)}
-        className="flex cursor-pointer text-sm w-full items-center justify-between p-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors duration-150"
+        className="flex border h-10 border-gray-300 cursor-pointer text-sm w-full items-center justify-between p-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors duration-150"
       >
         Upload Environment File
         <PiUploadDuotone className="text-2xl cursor-pointer" />
@@ -386,14 +504,32 @@ const UploadEnvironmentFile = ({ projectId }: any) => {
   );
 };
 const GenerateToken = ({ projectId }: any) => {
+  const queryClient = useQueryClient();
   let [isOpen, setIsOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
   const [token, setToken] = useState<string>("");
+  useEffect(() => {
+    if (isOpen === false) {
+      setToken("");
+    }
+  }, [isOpen]);
+  const mutation = useMutation({
+    mutationFn: generateProjectToken,
+    onSuccess: (data) => {
+      toast.success("Token generated successfully");
+      setToken(data.token || "");
+
+      queryClient.invalidateQueries({ queryKey: ["getAllProjects"] });
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to generate token");
+    },
+  });
+
   return (
     <div className="w-full">
       <Modal
-        hasChanged={true}
-        title={"Upload Files"}
+        preventOutsideClose={true}
+        title={"Generate Token"}
         open={isOpen}
         setOpen={setIsOpen}
       >
@@ -402,18 +538,13 @@ const GenerateToken = ({ projectId }: any) => {
             e.preventDefault();
             const formData = new FormData(e.target as HTMLFormElement);
             const envType = formData.get("envType");
-            try {
-              setLoading(true);
-              const res = await generateProjectToken({
-                projectId: projectId,
-                envType: envType?.toString(),
-              });
-              setToken(res?.token?.toString() ?? "");
-            } catch (error) {
-              // toast.error(error.message);
-            } finally {
-              setLoading(false);
-            }
+            const description = formData.get("description");
+
+            mutation.mutate({
+              projectId: projectId,
+              envType: envType?.toString(),
+              description: description?.toString(),
+            });
           }}
         >
           <div className="flex flex-col gap-4">
@@ -431,30 +562,42 @@ const GenerateToken = ({ projectId }: any) => {
               <option value="prod">Production</option>
               <option value="test">Staging</option>
             </select>
+            <input
+              type="text"
+              name="description"
+              placeholder="Enter token description (optional)"
+              className="border border-gray-300 rounded p-2 focus:outline-none "
+            />
+            {!mutation.isPending && token && (
+              <div className="rounded-md h-20 flex justify-between items-center p-4 bg-gray-50 border border-gray-200">
+                <p className=" max-w-2xl truncate">{token}</p>
 
-            <div className="rounded-md h-20 flex justify-between items-center p-4 bg-gray-50 border border-gray-200">
-              <p className=" max-w-2xl truncate">{token}</p>
-              <CgCopy
-                onClick={() => {
-                  navigator.clipboard
-                    .writeText(token)
-                    .then(() => {
-                      toast.success("Copied to clipboard");
-                    })
-                    .catch((err) => {
-                      toast.error("Error while copying");
-                    });
-                }}
-                className="text-2xl cursor-pointer"
-              />
-            </div>
+                <CgCopy
+                  onClick={() => {
+                    navigator.clipboard
+                      .writeText(token)
+                      .then(() => {
+                        toast.success("Copied to clipboard");
+                      })
+                      .catch((err) => {
+                        toast.error("Error while copying");
+                      });
+                  }}
+                  className="text-2xl cursor-pointer"
+                />
+              </div>
+            )}
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={mutation.isPending}
               className="px-4 py-2 h-10 disabled:bg-custom-black/50 bg-custom-black text-white rounded hover:bg-custom-black/90 cursor-pointer transition-colors"
             >
-              Generate Token
+              {mutation.isPending ? (
+                <AiOutlineLoading3Quarters className=" animate-spin mx-auto" />
+              ) : (
+                "Generate Token"
+              )}
             </button>
           </div>
         </form>
@@ -462,7 +605,7 @@ const GenerateToken = ({ projectId }: any) => {
 
       <button
         onClick={() => setIsOpen(true)}
-        className="flex cursor-pointer text-sm w-full items-center justify-between p-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors duration-150"
+        className="flex cursor-pointer border h-10 border-gray-300 text-sm w-full items-center justify-between p-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors duration-150"
       >
         Generate Token
         <AiFillInteraction className="text-2xl cursor-pointer" />
@@ -472,11 +615,7 @@ const GenerateToken = ({ projectId }: any) => {
 };
 
 export default function Project() {
-  const [projects, setProjects] = React.useState<ProjectResponse[] | null>([]);
-  const [loading, setLoading] = React.useState<boolean>(true);
-  const [createProjectLoading, setCreateProjectLoading] =
-    useState<boolean>(false);
-  const [tags, setTags] = useState([]);
+  const queryClient = useQueryClient();
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [projectDetails, setProjectDetails] = useState<{
     name: string;
@@ -488,19 +627,56 @@ export default function Project() {
     tags: [],
   });
 
-  useEffect(() => {
-    const fetchProjects = async () => {
-      try {
-        const data = await getAllProjectsApi();
-        setProjects(Array.isArray(data) ? data : [data]);
-      } catch (error) {
-        console.error("Failed to fetch projects:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchProjects();
-  }, []);
+  const { data, isLoading } = useQuery<ProjectResponse[] | null>({
+    queryKey: ["getAllProjects"],
+    queryFn: getAllProjectsApi,
+    staleTime: 0,
+  });
+  const mutation = useMutation({
+    mutationFn: createProjectApi,
+    onSuccess: () => {
+      toast.success("Project created successfully");
+      setIsOpen(false);
+      setProjectDetails({ name: "", description: "", tags: [] });
+
+      queryClient.invalidateQueries({ queryKey: ["getAllProjects"] });
+    },
+    onError: () => {
+      toast.error("Failed to create project");
+    },
+  });
+
+  const updateProject = useMutation({
+    mutationFn: ({
+      projectId,
+      projectDetails,
+    }: {
+      projectId: string;
+      projectDetails: {
+        name?: string;
+        description?: string;
+        tags?: never[];
+        status?: string;
+        isDeleted?: boolean;
+      };
+    }) => {
+      return updateProjectApi({
+        projectId,
+        name: projectDetails.name,
+        description: projectDetails.description,
+        tags: projectDetails.tags,
+        status: projectDetails.status,
+        isDeleted: projectDetails.isDeleted,
+      });
+    },
+    onSuccess: () => {
+      toast.success("Project updated successfully");
+      queryClient.invalidateQueries({ queryKey: ["getAllProjects"] });
+    },
+    onError: () => {
+      toast.error("Failed to update project");
+    },
+  });
 
   const createNewProject = async (e) => {
     e.preventDefault();
@@ -509,85 +685,88 @@ export default function Project() {
       toast.error("Project name is required");
       return;
     }
-    try {
-      setCreateProjectLoading(true);
-      const res = await createProjectApi({
-        name: projectDetails.name,
-        description: projectDetails.description,
-        tags: projectDetails.tags,
-      });
-      if (res) {
-        toast.success("Project created successfully");
-        setIsOpen(false);
-        setProjectDetails({
-          name: "",
-          description: "",
-          tags: [],
-        });
-        const updatedProjects = await getAllProjectsApi();
-        setProjects(
-          Array.isArray(updatedProjects) ? updatedProjects : [updatedProjects]
-        );
-      } else {
-        toast.error("Failed to create project");
-      }
-    } catch (error) {
-    } finally {
-      setCreateProjectLoading(false);
-    }
+    mutation.mutate({
+      name: projectDetails.name,
+      description: projectDetails.description,
+      tags: projectDetails.tags,
+    });
   };
 
   return (
     <div className="p-4">
-      <Modal title={"Create Project"} open={isOpen} setOpen={setIsOpen}>
-        <form onSubmit={createNewProject}>
-          <div className="flex flex-col gap-4">
-            <label className="text-sm font-semibold">Project Name</label>
-            <input
-              type="text"
-              placeholder="Enter project name"
-              required
-              value={projectDetails.name}
-              onChange={(e) =>
-                setProjectDetails({ ...projectDetails, name: e.target.value })
-              }
-              className="border border-gray-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <label className="text-sm font-semibold">Description</label>
-            <input
-              type="text"
-              placeholder="Enter project description"
-              name="description"
-              required
-              value={projectDetails.description}
-              onChange={(e) =>
-                setProjectDetails({
-                  ...projectDetails,
-                  description: e.target.value,
-                })
-              }
-              className="border border-gray-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <label className="text-sm font-semibold">Tags</label>
-            <TagInput tags={projectDetails} setTags={setProjectDetails} />
-            <button
-              type="submit"
-              disabled={
-                createProjectLoading ||
-                !projectDetails.name ||
-                !projectDetails.description ||
-                projectDetails.tags.length === 0
-              }
-              className="px-4 py-2 h-10 disabled:bg-custom-black/50 disabled:cursor-not-allowed bg-custom-black text-white rounded hover:bg-custom-black/90 cursor-pointer transition-colors"
-            >
-              {createProjectLoading ? (
-                <AiOutlineLoading3Quarters className=" animate-spin mx-auto" />
-              ) : (
-                "Create Project"
-              )}
-            </button>
-          </div>
-        </form>
+      <Modal
+        open={isOpen}
+        setOpen={setIsOpen}
+        type="drawer"
+        position="bottom"
+        customDimensions={{
+          width: "w-full",
+          height: "h-[60vh]",
+        }}
+      >
+        <div className="max-w-md mx-auto">
+          <h2 className="font-medium text-2xl text-gray-900 mt-2">
+            New Project
+          </h2>
+          <p className="leading-6 mt-2 text-gray-600">
+            Get started by filling in the information below to create your new
+            project.
+          </p>
+          <form onSubmit={createNewProject}>
+            <div className="flex flex-col">
+              <label className="font-medium text-gray-900 text-sm mt-4 mb-2 block">
+                Project Name
+              </label>
+              <input
+                type="text"
+                required
+                value={projectDetails.name}
+                onChange={(e) =>
+                  setProjectDetails({ ...projectDetails, name: e.target.value })
+                }
+                className="border border-gray-200 bg-white w-full px-3 h-9 rounded-lg outline-none focus:ring-2 focus:ring-black/5 text-gray-900"
+              />
+              <label className="font-medium text-gray-900 text-sm mt-4 mb-2 block">
+                Tags
+              </label>
+              <TagInput
+                tags={projectDetails}
+                placeholder=""
+                setTags={setProjectDetails}
+              />
+
+              <label className="font-medium text-gray-900 text-sm mt-4 mb-2 block">
+                Description
+              </label>
+              <textarea
+                rows={4}
+                required
+                value={projectDetails.description}
+                onChange={(e) =>
+                  setProjectDetails({
+                    ...projectDetails,
+                    description: e.target.value,
+                  })
+                }
+                className="border border-gray-200 bg-white w-full resize-none rounded-lg p-3 pt-2.5 text-gray-900 outline-none focus:ring-2 focus:ring-black/5 focus:ring-offset-0"
+              />
+
+              <button
+                type="submit"
+                disabled={
+                  !projectDetails.name || projectDetails.tags.length === 0
+                }
+                className="px-4 py-2 mt-8 h-10 disabled:bg-custom-black/50 disabled:cursor-not-allowed bg-custom-black text-white rounded hover:bg-custom-black/90 cursor-pointer transition-colors"
+              >
+                {mutation.isPending ? (
+                  <AiOutlineLoading3Quarters className=" animate-spin mx-auto" />
+                ) : (
+                  "Create Project"
+                )}
+              </button>
+            </div>
+          </form>
+        </div>
       </Modal>
       <Table
         pagination={true}
@@ -602,41 +781,16 @@ export default function Project() {
             </button>
           </div>
         }
-        loading={loading}
+        loading={isLoading}
         data={[
           ["Project Name", "Project Id", "Created At", "Status", "Action"],
-          ...(projects
-            ? projects?.map((project, index) => [
+          ...(data
+            ? data?.map((project, index) => [
                 <div className="flex flex-col gap-y-4">
                   <div className="flex gap-x-2 items-center">
                     <FcFolder className="text-xl shrink-0" />
                     <p className="font-medium text-md ">{project.name} </p>
                   </div>
-
-                  {/* {project?.envFiles && project?.envFiles.length > 0 && (
-                    <span className="flex flex-wrap gap-2">
-                      {project.envFiles.map((envFile, idx) => (
-                        <span
-                          className={
-                            "px-3 font-bold  text-[9px] py-1 w-fit rounded-full " +
-                            (envFile.envType === "dev"
-                              ? "bg-green-200 text-green-800"
-                              : envFile.envType === "test"
-                              ? "bg-yellow-200 text-yellow-800"
-                              : "bg-red-200 text-red-800")
-                          }
-                          key={idx}
-                        >
-                          {envFile.envType === "dev"
-                            ? "🟢"
-                            : envFile.envType === "test"
-                            ? "🟡"
-                            : "🔴"}{" "}
-                          {envFile.envType}
-                        </span>
-                      ))}
-                    </span>
-                  )} */}
                 </div>,
 
                 <span className="text-md">{project._id}</span>,
@@ -648,6 +802,19 @@ export default function Project() {
                 </span>,
 
                 <div className="flex items-center space-x-2">
+                  <ToggleButton
+                    isOn={project.status === "active"}
+                    handleToggle={() => {
+                      updateProject.mutate({
+                        projectId: project._id,
+                        projectDetails: {
+                          status:
+                            project.status === "active" ? "inactive" : "active",
+                        },
+                      });
+                    }}
+                    className="ml-2"
+                  />
                   <span className="relative inline-flex h-2 w-2">
                     <span
                       className={`animate-ping absolute inline-flex h-full w-full rounded-full ${
@@ -671,7 +838,10 @@ export default function Project() {
                       : ""}
                   </span>
                 </div>,
-                <UpdateDrawer project={project} />,
+                <UpdateDrawer
+                  project={project}
+                  updateProject={updateProject}
+                />,
               ])
             : []),
         ]}

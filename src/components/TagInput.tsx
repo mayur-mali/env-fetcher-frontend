@@ -44,7 +44,7 @@ const TagInput = ({
   };
 
   return (
-    <div className="border border-gray-300 rounded-md px-2 py-1 flex flex-wrap items-center min-h-[40px] max-h-[70px] overflow-y-scroll">
+    <div className="border border-gray-300 bg-white rounded-md px-2 py-1 flex flex-wrap items-center h-auto">
       {tags.tags.map((tag, index) => (
         <span
           key={index}

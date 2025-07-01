@@ -7,9 +7,12 @@ import {
   CreateProjectRequest,
   UploadEnvFile,
   CreateDeveloper,
-  GenerateProjectToken,
   CreateGroup,
+  Token,
+  Group,
+  Access,
 } from "../types/apiType";
+import { DashboardState } from "src/pages/Dashboard";
 
 export const registerApi = async ({
   firstName,
@@ -53,8 +56,10 @@ export const getUserApi = async (): Promise<User> => {
   return res.data.admin;
 };
 
-export const getAllProjectsApi = async (): Promise<ProjectResponse> => {
-  const res = await axios.get<ProjectResponse>("/api/project");
+export const getAllProjectsApi = async (): Promise<
+  ProjectResponse[] | null
+> => {
+  const res = await axios.get<ProjectResponse[]>("/api/project");
   return res.data;
 };
 
@@ -67,6 +72,31 @@ export const createProjectApi = async ({
     name,
     description,
     tags,
+  });
+  return res.data;
+};
+
+export const updateProjectApi = async ({
+  projectId,
+  name,
+  description,
+  tags,
+  status,
+  isDeleted,
+}: {
+  projectId: string;
+  name?: string;
+  description?: string;
+  tags?: string[];
+  status?: string;
+  isDeleted?: boolean;
+}) => {
+  const res = await axios.put(`/api/project/${projectId}`, {
+    name,
+    description,
+    tags,
+    status,
+    isDeleted,
   });
   return res.data;
 };
@@ -110,18 +140,61 @@ export const getAllDevelopersApi = async (): Promise<CreateDeveloper[]> => {
   const res = await axios.get<CreateDeveloper[]>("/api/developer");
   return res.data;
 };
+export const updateDeveloperApi = async ({
+  developerId,
+
+  name,
+  isActive,
+}: {
+  developerId: string;
+
+  name?: string;
+  isActive?: boolean;
+}): Promise<CreateDeveloper> => {
+  const res = await axios.put<CreateDeveloper>(
+    `/api/developer/${developerId}`,
+    {
+      name,
+      isActive,
+    }
+  );
+
+  if (!res.data) throw new Error("No developer updated");
+  return res.data;
+};
+export const deleteDeveloperApi = async (
+  developerId: string
+): Promise<string> => {
+  const res = await axios.delete<string>(`/api/developer/${developerId}`);
+  if (res.status !== 200) throw new Error("Failed to delete developer");
+  return res.data;
+};
 
 export const generateProjectToken = async ({
   projectId,
   envType,
-}: GenerateProjectToken): Promise<GenerateProjectToken> => {
-  const res = await axios.post<GenerateProjectToken>(
-    "api/project/generate-token",
-    {
-      projectId,
-      envType,
-    }
-  );
+  description,
+}: {
+  projectId: string | undefined | null;
+  envType: string | undefined | null;
+  description?: string;
+}): Promise<Token> => {
+  const res = await axios.post<Token>("api/token", {
+    projectId,
+    envType,
+    description,
+  });
+  return res.data;
+};
+
+export const getAllTokensApi = async (): Promise<Token[]> => {
+  const res = await axios.get<Token[]>("/api/token");
+  if (!res.data) throw new Error("No tokens found");
+  return res.data;
+};
+export const deactivateTokenApi = async (tokenId: string): Promise<string> => {
+  const res = await axios.put<string>(`/api/token/${tokenId}/deactivate`);
+  if (res.status !== 200) throw new Error("Failed to delete token");
   return res.data;
 };
 
@@ -131,8 +204,8 @@ export const getAllActivitiesApi = async (): Promise<[]> => {
   return res.data;
 };
 
-export const getDashboardStatsApi = async (): Promise<{}> => {
-  const res = await axios.get<{}>("/api/dashboard/stats");
+export const getDashboardStatsApi = async (): Promise<DashboardState> => {
+  const res = await axios.get<DashboardState>("/api/dashboard/stats");
   if (!res.data) throw new Error("No dashboard stats found");
   return res.data;
 };
@@ -166,8 +239,8 @@ export const createGroupApi = async ({
   return res.data;
 };
 
-export const getAllGroupsApi = async (): Promise<{ groups: any[] }> => {
-  const res = await axios.get<{ groups: any[] }>("/api/groups");
+export const getAllGroupsApi = async (): Promise<Group[]> => {
+  const res = await axios.get<Group[]>("/api/groups");
   if (!res.data) throw new Error("No groups found");
   return res.data;
 };
@@ -230,5 +303,37 @@ export const compareEvnVersionsApi = async ({
     result: { left: string; right: string; change: "added" | "removed" }[];
   }>(`/api/env/compare/${projectId}/${envType}/${version1}/${version2}`);
   if (!res.data) throw new Error("No changes found");
+  return res.data;
+};
+
+export const assignDevelopersToGroupApi = async ({
+  groupId,
+  developerIds,
+}: {
+  groupId: string;
+  developerIds: string[];
+}): Promise<{ message: string }> => {
+  const res = await axios.put<{ message: string }>(
+    `/api/groups/${groupId}/assign`,
+    { developerIds }
+  );
+
+  if (res.status !== 200) throw new Error("Failed to assign developers");
+  return res.data;
+};
+
+export const updateAccessOfGroup = async ({
+  groupId,
+  access,
+}: {
+  groupId: string;
+  access: Access[];
+}): Promise<{ message: string }> => {
+  const res = await axios.put<{ message: string }>(
+    `api/groups/${groupId}/access`,
+    { access }
+  );
+
+  if (res.status !== 200) throw new Error("Failed to update access");
   return res.data;
 };

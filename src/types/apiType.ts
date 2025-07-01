@@ -21,7 +21,7 @@ export interface ProjectResponse {
   admin: User;
   isDelete: boolean;
   tags: string[];
-  discription?: string;
+  description?: string;
   envFiles?: any[];
   recentActivities?: any[];
   createdAt: string;
@@ -41,33 +41,63 @@ export interface UploadEnvFile {
   projectId: string;
   envType: string;
   envFile: string | Blob;
+  message?: string;
 }
 
 export interface CreateDeveloper {
   email: string;
   name: string;
   password: string;
+  _id?: string;
+  isActive?: boolean;
+  createdAt?: string | Date;
+  updatedAt?: string | Date;
 }
 
-export interface GenerateProjectToken {
-  projectId: string;
-  envType: string | undefined;
-  token?: string | undefined;
+export type Environment = "development" | "staging" | "production";
+
+interface CreatedBy {
+  _id: string;
+  firstName: string;
+  lastName: string;
+}
+interface Project {
+  id: string;
+  name?: string;
+}
+export interface Token {
+  _id?: string;
+  name?: string;
+  token?: string;
+  createdBy?: CreatedBy;
+  projectId?: Project;
+  envType: Environment | string | undefined;
+  isActive?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+  description?: string;
+}
+
+export interface Group {
+  id: string;
+  name: string;
+  admin: string;
+  description?: string;
+  developers: string[];
+  access: string[];
+  _id: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface CreateGroup {
   name: string;
   description?: string;
   message?: string;
-  group?: {
-    id: string;
-    name: string;
-    admin: string;
-    description?: string;
-    developers: string[];
-    access: string[];
-    _id: string;
-    createdAt: string;
-    updatedAt: string;
-  };
+  group?: Group;
+}
+
+export interface Access {
+  projectId: string;
+  envType: Environment | string | undefined;
 }
