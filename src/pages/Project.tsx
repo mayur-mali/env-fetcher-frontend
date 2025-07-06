@@ -355,9 +355,6 @@ const UploadEnvironmentFile = ({ projectId }: any) => {
 
       queryClient.invalidateQueries({ queryKey: ["getAllProjects"] });
     },
-    onError: () => {
-      toast.error("Failed to create project");
-    },
   });
 
   return (
@@ -519,9 +516,6 @@ const GenerateToken = ({ projectId }: any) => {
       setToken(data.token || "");
 
       queryClient.invalidateQueries({ queryKey: ["getAllProjects"] });
-    },
-    onError: (error) => {
-      toast.error(error.message || "Failed to generate token");
     },
   });
 

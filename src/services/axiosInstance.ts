@@ -35,7 +35,7 @@ axiosInstance.interceptors.response.use(
       localStorage.removeItem("token");
       window.location.href = "/login";
     } else if (status === 403) {
-      toast.error("Forbidden. You don’t have access.");
+      toast.error(error.response?.data?.error || error.response?.data?.message);
     } else if (status >= 500) {
       toast.error("Server error. Try again later.");
     } else {
