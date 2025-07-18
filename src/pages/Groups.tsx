@@ -296,8 +296,8 @@ const DeleteGroup: React.FC = ({}) => {
           isOpen={isDeleteOpen}
           onClose={() => setIsDeleteOpen(false)}
           onConfirm={() => {}}
-          title="Delete Developer"
-          description="Are you sure you want to delete this developer? This action cannot be undone."
+          title="Delete Group"
+          description="Are you sure you want to delete this group? This action cannot be undone."
           IconComponent={BsExclamationTriangle}
           confirmText="Yes, Delete"
           cancelText="No, Keep It"

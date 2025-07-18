@@ -10,6 +10,8 @@ import {
   getAllProjectsApi,
   getAllTokensApi,
 } from "../services/api";
+import { CustomSelect } from "@components/CustomSelect";
+import { toast } from "react-toastify";
 
 const TokenGenerate: React.FC = () => {
   const queryClient = useQueryClient();
@@ -45,78 +47,109 @@ const TokenGenerate: React.FC = () => {
       console.error("Error generating token:", error);
     },
   });
-
+  const [selectedProject, setProjectSelected] = useState({ id: "", name: "" });
+  const [selectedEnvType, setEnvTypeSelected] = useState({
+    id: "dev",
+    name: "dev",
+  });
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.target as HTMLFormElement);
-    const envType = formData.get("envType");
-    const projectId = formData.get("projectId");
+    if (!selectedProject.id || !selectedEnvType.id) {
+      toast.warn("Please select a project and environment type.");
+      return;
+    }
     const description = formData.get("description");
-    const selectedProject =
-      projectData?.find((project) => project._id === projectId)?._id ||
-      undefined;
 
     mutation.mutate({
-      envType: envType as string,
-      projectId: selectedProject,
+      envType: selectedEnvType.id,
+      projectId: selectedProject.id,
       description: description ? (description as string) : "",
     });
   };
 
-  const [toggeleState, setToggleState] = useState<boolean>(false);
-
   return (
     <div>
-      <Modal title={"Generate Token"} open={isOpen} setOpen={setIsOpen}>
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <div className="flex flex-col gap-4">
-            <label className="text-sm font-semibold">Project Name</label>
-            <select
-              name="projectId"
-              required
-              className="border border-gray-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">Select Project</option>
-              {projectData?.map((project) => (
-                <option key={project._id} value={project._id}>
-                  {project.name}
-                </option>
-              ))}
-            </select>
-            <label className="text-sm font-semibold">Environment Type</label>
-            <select
-              required
-              id="select-env-type"
-              name="envType"
-              className="border border-gray-300 rounded p-2 focus:outline-none "
-            >
-              <option value="">Select Environment Type</option>
-              <option value="dev">Development</option>
-              <option value="prod">Production</option>
-              <option value="test">Staging</option>
-            </select>
-            <label className="text-sm font-semibold">Description </label>
-            <input
-              type="text"
-              name="description"
-              placeholder="Enter token description (optional)"
-              required
-              className="border border-gray-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
+      <Modal
+        title={""}
+        open={isOpen}
+        setOpen={setIsOpen}
+        type="drawer"
+        position="bottom"
+        customDimensions={{
+          width: "w-full",
+          height: "h-[60vh]",
+        }}
+      >
+        <div className="max-w-md mx-auto">
+          <h2 className="font-medium text-2xl text-gray-900 mt-2">
+            Generate a New Token
+          </h2>
+          <p className="leading-6 mt-2 text-gray-600">
+            Please fill out the form below to generate a new token for your
+            project. Ensure that you select the correct project and environment
+            type.
+          </p>
 
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="px-4 py-2 h-10 disabled:bg-custom-black/50 bg-custom-black text-white rounded hover:bg-custom-black/90 cursor-pointer transition-colors"
-            >
-              {isLoading ? (
-                <AiOutlineLoading3Quarters className=" animate-spin mx-auto" />
-              ) : (
-                "Generate Token"
-              )}
-            </button>
-          </div>
-        </form>
+          <form onSubmit={handleSubmit}>
+            <div className="flex flex-col ">
+              <label className="font-medium text-gray-900 text-sm mt-4 mb-2 block">
+                Project Name
+              </label>
+
+              <CustomSelect
+                options={
+                  projectData?.map((project) => ({
+                    id: project._id,
+                    name: project.name,
+                  })) || []
+                }
+                value={selectedProject}
+                onChange={setProjectSelected}
+                filter={true}
+                inputClassName="border border-gray-200 bg-white w-full px-3 h-9 rounded-lg outline-none  focus:ring-2 focus:ring-black/5 text-gray-900"
+              />
+
+              <label className="font-medium text-gray-900 text-sm mt-4 mb-2 block">
+                Environment Type
+              </label>
+
+              <CustomSelect
+                options={
+                  ["dev", "prod", "test"]?.map((env) => ({
+                    id: env,
+                    name: env,
+                  })) || []
+                }
+                value={selectedEnvType}
+                onChange={setEnvTypeSelected}
+                //filter={true}
+                inputClassName="border border-gray-200 bg-white w-full px-3 h-9 rounded-lg outline-none  focus:ring-2 focus:ring-black/5 text-gray-900"
+              />
+              <label className="font-medium text-gray-900 text-sm mt-4 mb-2 block">
+                Description{" "}
+              </label>
+              <textarea
+                rows={4}
+                required
+                name="description"
+                className="border border-gray-200 bg-white w-full resize-none rounded-lg p-3 pt-2.5 text-gray-900 outline-none focus:ring-2 focus:ring-black/5 focus:ring-offset-0"
+              />
+
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="px-4 py-2 mt-4 h-10 disabled:bg-custom-black/50 disabled:cursor-not-allowed bg-custom-black text-white rounded hover:bg-custom-black/90 cursor-pointer transition-colors"
+              >
+                {isLoading ? (
+                  <AiOutlineLoading3Quarters className=" animate-spin mx-auto" />
+                ) : (
+                  "Generate Token"
+                )}
+              </button>
+            </div>
+          </form>
+        </div>
       </Modal>
       <Table
         minHeight={" h-auto"}
@@ -132,12 +165,25 @@ const TokenGenerate: React.FC = () => {
           </div>
         }
         data={[
-          ["Token", "Project Name", "Environment", "Active"],
+          [
+            "Token",
+            "Project Name",
+            "Environment",
+            "Created At",
+            "Updated At",
+            "Active",
+          ],
           ...(data
             ? data?.map((token) => [
                 token.token,
                 token.projectId?.name,
                 token.envType,
+                token.createdAt
+                  ? new Date(token.createdAt).toLocaleString()
+                  : "-",
+                token.updatedAt
+                  ? new Date(token.updatedAt).toLocaleString()
+                  : "-",
                 <ToggleButton
                   isOn={token.isActive}
                   isDiseble={!token.isActive}
